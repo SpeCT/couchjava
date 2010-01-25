@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project couchdb-java-viewserver">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="/home/hardtke/cloudant/couchdb-java-viewserver.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="com.cloudant.couchdbjavaserver.RunServer"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="/home/hardtke/cloudant/workspace/couchdb-java-viewserver/bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="/home/hardtke/cloudant/workspace/couchdb-java-viewserver/lib/org.json.jar"/>
+        </jar>
+    </target>
+</project>
