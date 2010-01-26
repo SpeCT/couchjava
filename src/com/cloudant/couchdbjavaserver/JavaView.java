@@ -13,7 +13,7 @@ public interface JavaView {
 	
 	JSONArray MapDoc(JSONObject doc);
 	
-	JSONObject Reduce(JSONObject doc);
+	JSONObject Reduce(JSONArray reduceOut);
 	
 	JSONObject ReReduce(JSONObject doc);
 	

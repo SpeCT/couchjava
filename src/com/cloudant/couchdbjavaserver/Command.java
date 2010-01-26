@@ -11,6 +11,7 @@ import java.util.HashMap;
  */
 public enum Command {
 	RESET ("reset"),
+	ADD_LIBRARY ("add_library"),
 	ADD_FUN ("add_fun"),
 	MAP_DOC ("map_doc"),
 	REDUCE ("reduce"),
