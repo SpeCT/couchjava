@@ -25,7 +25,12 @@ A view can be created by creating a java class that implements the methods of th
 
 --- code ---
 
-package com.cloudant.javaviews;
+package com.cloudant.javaviews
+;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,6 +38,8 @@ import org.json.JSONObject;
 import com.cloudant.couchdbjavaserver.*;
 
 public class SplitText implements JavaView {
+	
+	private String fieldToSplit;
 
 	public void Log(String logline) {
 		System.out.println();
@@ -44,7 +51,7 @@ public class SplitText implements JavaView {
 		try {
 			String id = doc.getString("_id");
 			String rev = doc.getString("_rev");
-			String text = doc.getString("title");
+			String text = findFieldString(fieldToSplit, doc);
 			if (text != null && text.length() > 0) {
 				for (String s : text.split(" ")) {
 					out.put(new JSONArray().put(s).put(1));
@@ -59,30 +66,72 @@ public class SplitText implements JavaView {
 		return out;
 	}
 
+
 	@Override
-	public JSONObject ReReduce(JSONObject doc) {
+	public JSONArray ReReduce(JSONArray reduceResults) {
 		// TODO Auto-generated method stub
+		return new JSONArray();
+	}
+
+	@Override
+	public JSONArray Reduce(JSONArray mapResults) {
+		HashMap<String, Integer> wordCount = new HashMap<String,Integer>();
+		for (int i = 0; i < mapResults.length(); i++){
+			try {
+				JSONArray keyId = mapResults.getJSONArray(i).getJSONArray(0);
+				String key = keyId.getString(0);
+				if (wordCount.containsKey(key)) {
+					wordCount.put(key,wordCount.get(key) + 1);
+				}
+			} catch (JSONException je) {
+				Log("Fishy map result");
+			}
+		}
+		JSONObject job = new JSONObject();
+		for (String key : wordCount.keySet()) {
+			try {
+				job.put(key, wordCount.get(key));
+			} catch (JSONException je) {
+				Log("Problem update output array");
+			}
+		}
+		return new JSONArray().put(job);
+	}
+
+	public void Configure(String config) {
+		fieldToSplit = config;
+		return;		
+	}
+	
+	@SuppressWarnings("unchecked")
+	public String findFieldString(String keyToFind, JSONObject obj) {
+		if (obj.has(keyToFind)) {
+			try {
+				return obj.getString(keyToFind);
+			} catch (JSONException je){
+				Log("Field " + keyToFind + " is not a string");
+				return null;
+			}
+		}
+		Iterator<String> keys = (Iterator<String>)obj.keys();
+		while (keys.hasNext()) {
+			String key = keys.next();
+			try {
+				JSONObject jo = obj.getJSONObject(key);
+				String out = findFieldString(keyToFind, jo);
+				if (out != null) return out;
+			} catch (JSONException je) {
+				/* key not a JSONObject */
+			}
+		}
 		return null;
 	}
-
-	@Override
-	public JSONObject Reduce(JSONArray doc) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean Reset() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 
 }
 
 --- end code ---
 
-Here, only the MapDoc function is defined.
+Here, only the MapDoc function is defined. (Reduce doesn't work for some unknown reason).
 
 Once you have your class, make it into a jar archive (being sure to include any needed non-standard libaries).  
 
@@ -91,11 +140,14 @@ You now need to load the view into couch db.  For this example, my database is n
 {
     "_id":"_design/splittext",
     "language":"java",
-    "views" : {"title" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitTe
-xt\"}"}}    
+    "views" : 
+	{
+	"title" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"title\"}"},
+	"text" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"text\"}"}
+	}    
 }
 
-Note that you need to pass a single variable to "map", the full class name of your JavaView implmentation.  Upload this file (which I have saved on disk as splittext.json):
+Note that you need to pass a single variable to "map", the full class name of your JavaView implmentation.  The "configure" field is optional and allows you to configure your class at run time.  Upload this file (which I have saved on disk as splittext.json):
 
 curl -X PUT http://localhost:5984/wikipedia/_design/splittext -d @splittext.json
 

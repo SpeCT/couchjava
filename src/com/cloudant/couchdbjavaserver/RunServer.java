@@ -6,8 +6,6 @@ import java.net.URLClassLoader;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.ServiceLoader;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,10 +55,15 @@ public class RunServer {
 							JSONObject jobj = new JSONObject(arr.getString(1));
 							String name = jobj.getString("classname");
 							Log("add_fun " + name);
-							URLClassLoader loader = new URLClassLoader(libUrls.toArray(new URL[0]));
-							Class<JavaView> cl = (Class<JavaView>) loader.loadClass(name);
-							Object o = cl.newInstance();
-							views.add((JavaView)o);
+							JavaView view = getClass(name, libUrls);
+							try {
+								String config = jobj.getString("configure");
+								view.Configure(config);
+							} catch (JSONException je) {
+								Log(name + " has no configure string");
+								/* no configuration field */
+							}
+							views.add(view);
 							System.out.println("true");
 							break;
 						} catch (Exception e) {
@@ -76,13 +79,45 @@ public class RunServer {
 						System.out.println(out.toString());
 						break;
 					case REDUCE: 
-						JSONObject reduceOut = new JSONObject();
-						final JSONArray mapresults = arr.getJSONArray(3);
-						for (JavaView view : views) {
-							reduceOut = view.Reduce(mapresults);
+						try {
+							JSONArray reduceOut = new JSONArray();
+							List<JavaView> reduceViews = new ArrayList<JavaView>();
+							final JSONArray reduceFuncs = arr.getJSONArray(1);
+							// a simple list of class names
+								for (int i = 0; i < reduceFuncs.length(); i++) {
+								reduceViews.add(getClass(reduceFuncs.getString(i),libUrls));
+							}
+							final JSONArray mapresults = arr.getJSONArray(2);
+							for (JavaView view : reduceViews) {
+								JSONArray thisResult = view.Reduce(mapresults);
+								reduceOut.put(thisResult.get(0));
+							}
+							System.out.println((new JSONArray().put("true").put(reduceOut.toString())).toString());
+							break;
+						} catch (Exception e) {
+							System.out.println("{\"error\":\"1\",\"reason\":\"" + e.getMessage() + "\"}");
+							break;							
 						}
-						System.out.println(reduceOut.toString());
-
+					case REREDUCE: 
+						try {
+							JSONArray rereduceOut = new JSONArray();
+							List<JavaView> rereduceViews = new ArrayList<JavaView>();
+							final JSONArray rereduceFuncs = arr.getJSONArray(1);
+							// a simple list of class names
+								for (int i = 0; i < rereduceFuncs.length(); i++) {
+								rereduceViews.add(getClass(rereduceFuncs.getString(i),libUrls));
+							}
+							final JSONArray mapresults = arr.getJSONArray(2);
+							for (JavaView view : rereduceViews) {
+								JSONArray thisResult = view.Reduce(mapresults);
+								rereduceOut.put(thisResult.get(0));
+							}
+							System.out.println((new JSONArray().put("true").put(rereduceOut.toString())).toString());
+							break;
+						} catch (Exception e) {
+							System.out.println("{\"error\":\"1\",\"reason\":\"" + e.getMessage() + "\"}");
+							break;							
+						}
 					default: 
 						System.out.println("");
 						throw new JSONException("Unrecognized view server command: " + event);
@@ -104,4 +139,11 @@ public class RunServer {
 		System.out.println(out.toString());		
 	}
 
+	public static JavaView getClass(String classname, List<URL> libs) throws Exception {
+		URLClassLoader loader = new URLClassLoader(libs.toArray(new URL[0]));
+		Class<JavaView> cl = (Class<JavaView>) loader.loadClass(classname);
+		Object o = cl.newInstance();
+		return (JavaView)o;		
+	}
+	
 }

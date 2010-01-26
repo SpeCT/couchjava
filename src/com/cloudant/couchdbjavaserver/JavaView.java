@@ -9,13 +9,18 @@ import org.json.*;
  *
  */
 public interface JavaView {
-	boolean Reset();
 
 	JSONArray MapDoc(JSONObject doc);
 	
-	JSONObject Reduce(JSONArray reduceOut);
+	JSONArray Reduce(JSONArray mapResults);
+	// only first result in array is used!
+	// null not valid return type
 	
-	JSONObject ReReduce(JSONObject doc);
+	JSONArray ReReduce(JSONArray reduceResults);
+	// only first results in array is used!
+	// null not valid return type
 
+	void Configure(String config);
+	
 	void Log(String logline);
 }
