@@ -1,15 +1,58 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="create_run_jar" name="Create Runnable Jar for Project couchdb-java-viewserver">
-    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
-    <!--ANT 1.7 is required                                        -->
-    <target name="create_run_jar">
-        <jar destfile="/home/hardtke/cloudant/couchdb-java-viewserver.jar" filesetmanifest="mergewithoutmain">
-            <manifest>
-                <attribute name="Main-Class" value="com.cloudant.couchdbjavaserver.RunServer"/>
-                <attribute name="Class-Path" value="."/>
-            </manifest>
-            <fileset dir="/home/hardtke/cloudant/workspace/couchdb-java-viewserver/bin"/>
-            <zipfileset excludes="META-INF/*.SF" src="/home/hardtke/cloudant/workspace/couchdb-java-viewserver/lib/org.json.jar"/>
-        </jar>
-    </target>
+<project default="jar"
+         name="couchdb-java-viewserver">
+
+  <!-- settable properties -->
+  <property file="build.properties"/>
+  <property name="project.home" value="~/couchdb-java-viewserver"/>
+  <property name="jar.file" value="couchdb-java-viewserver.jar"/>
+
+  <!-- internal properties -->
+  <property name="src.dir" value="${project.home}/src"/>
+  <property name="bin.dir" value="${project.home}/bin"/>
+  <property name="lib.dir" value="${project.home}/lib"/>
+  <property name="dist.dir" value="${project.home}/dist"/>
+
+  <!-- build path -->
+  <path id="build.path">
+    <pathelement path="${classpath}"/>
+    <fileset dir="${lib.dir}">
+      <include name="**/*.jar"/>
+    </fileset>
+  </path>
+
+  <!-- targets -->
+  <target name="init">
+    <tstamp/>
+  </target>
+
+  <target name="clean" depends="distclean">
+    <delete dir="${bin.dir}"/>
+  </target>
+
+  <target name="distclean">
+    <delete dir="${dist.dir}"/>
+  </target>
+
+  <target name="compile" depends="init">
+    <mkdir dir="${bin.dir}"/>
+    <javac srcdir="${src.dir}"
+           destdir="${bin.dir}">
+      <classpath refid="build.path"/>
+    </javac>
+  </target>
+
+  <target name="jar" depends="compile">
+    <mkdir dir="${dist.dir}"/>
+    <jar destfile="${dist.dir}/${jar.file}" filesetmanifest="mergewithoutmain">
+      <manifest>
+        <attribute name="Main-Class"
+                   value="com.cloudant.couchdbjavaserver.RunServer"/>
+        <attribute name="Class-Path" value="."/>
+      </manifest>
+      <fileset dir="${project.home}/bin"/>
+      <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/org.json.jar"/>
+    </jar>
+  </target>
+
 </project>
