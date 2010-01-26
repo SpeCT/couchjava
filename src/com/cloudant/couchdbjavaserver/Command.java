@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.cloudant.couchdbjavaserver;
 
@@ -24,7 +24,7 @@ public enum Command {
 			lookup.put(c.getCouchCommand(), c);
 		}
 	}
-		
+
 	private String couchdbString;
 	Command (String couchdbString) {
 		this.couchdbString = couchdbString;
@@ -36,5 +36,5 @@ public enum Command {
 		if (in == null) return null;
 		return lookup.get(in);
 	}
-	
+
 }

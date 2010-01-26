@@ -32,9 +32,9 @@ public class RunServer {
 				Command c = Command.getCommandFromString(event);
 				if (c == null) {
 					System.out.println("");
-					throw new JSONException("Unrecognized view server command: " + event);			
+					throw new JSONException("Unrecognized view server command: " + event);
 				}
-				switch (c) { 
+				switch (c) {
 					case RESET:
 						Log("reset");
 						views = null;
