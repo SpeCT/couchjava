@@ -1,0 +1,108 @@
+couchdb-java-viewserver is a java language view server for couchdb.  
+
+To compile:
+
+1) Edit build.xml to include you local file paths (need to make this automatic)
+2) Do "ant create_run_jar"
+3) This creates a runnable jar file.  Stick this in your desired location.
+
+Get the patch couchdb and compile:
+
+https://gist.github.com/aed82822749223b6dd1d
+
+To attach to couchdb:
+
+1) Add the following lines to your couchdb local.ini file:
+
+[query_servers]
+java=/usr/bin/java -jar /home/hardtke/cloudant/couchdb-java-viewserver.jar
+
+where you have of course changed the path to the jar file!
+
+Implementing a view:
+
+A view can be created by creating a java class that implements the methods of the com.cloudant.couchdbjavaserver.JavaView interface.  Here's a simple example that takes the json field "title" and splits the text into words:
+
+--- code ---
+
+package com.cloudant.javaviews;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import com.cloudant.couchdbjavaserver.*;
+
+public class SplitText implements JavaView {
+
+	public void Log(String logline) {
+		System.out.println();
+		
+	}
+
+	public JSONArray MapDoc(JSONObject doc) {
+		JSONArray out = new JSONArray();
+		try {
+			String id = doc.getString("_id");
+			String rev = doc.getString("_rev");
+			String text = doc.getString("title");
+			if (text != null && text.length() > 0) {
+				for (String s : text.split(" ")) {
+					out.put(new JSONArray().put(s).put(1));
+				}
+			} else {
+				out.put(new JSONArray());
+			}
+		} catch (JSONException je) {
+			out.put(new JSONArray());
+			Log("Malformed document: " + doc.toString());
+		}
+		return out;
+	}
+
+	@Override
+	public JSONObject ReReduce(JSONObject doc) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public JSONObject Reduce(JSONArray doc) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean Reset() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
+}
+
+--- end code ---
+
+Here, only the MapDoc function is defined.
+
+Once you have your class, make it into a jar archive (being sure to include any needed non-standard libaries).  
+
+You now need to load the view into couch db.  For this example, my database is named "wikipedia".  The design document looks like:
+
+{
+    "_id":"_design/splittext",
+    "language":"java",
+    "views" : {"title" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitTe
+xt\"}"}}    
+}
+
+Note that you need to pass a single variable to "map", the full class name of your JavaView implmentation.  Upload this file (which I have saved on disk as splittext.json):
+
+curl -X PUT http://localhost:5984/wikipedia/_design/splittext -d @splittext.json
+
+Now you need to grab the revision id (using GET) in order to attach the jar file that contains your class:
+
+curl -X PUT http://localhost:5984/wikipedia/_design/test/javaviews.jar?rev=1-d58671fd0844f4466f498f22575ec308 --data-binary @javaviews.jar
+
+You are done -- you can run your view like you normally would:
+
+curl -X GET http://localhost:5984/wikipedia/_design/splittext/_view/title
