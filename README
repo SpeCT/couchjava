@@ -1,9 +1,9 @@
-couchdb-java-viewserver is a java language view server for couchdb.  
+couchdb-java-viewserver is a java language view server for couchdb.
 
 To compile:
 
 1) Edit build.xml to include you local file paths (need to make this automatic)
-2) Do "ant create_run_jar"
+2) Do "ant" or "ant jar"
 3) This creates a runnable jar file.  Stick this in your desired location.
 
 Get the patch couchdb and compile:
@@ -43,7 +43,7 @@ public class SplitText implements JavaView {
 
 	public void Log(String logline) {
 		System.out.println();
-		
+
 	}
 
 	public JSONArray MapDoc(JSONObject doc) {
@@ -133,7 +133,7 @@ public class SplitText implements JavaView {
 
 Here, only the MapDoc function is defined. (Reduce doesn't work for some unknown reason).
 
-Once you have your class, make it into a jar archive (being sure to include any needed non-standard libaries).  
+Once you have your class, make it into a jar archive (being sure to include any needed non-standard libaries).
 
 You now need to load the view into couch db.  For this example, my database is named "wikipedia".  The design document looks like:
 

@@ -1,3 +1,5 @@
 bin/*
+dist/*
 *~
 semantic.cache
+build.properties
