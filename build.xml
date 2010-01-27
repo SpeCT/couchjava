@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="jar"
+<project default="jars"
          name="couchdb-java-viewserver">
 
   <!-- settable properties -->
   <property file="build.properties"/>
   <property name="project.home" value="~/couchdb-java-viewserver"/>
-  <property name="jar.file" value="couchdb-java-viewserver.jar"/>
+  <property name="jar.name.server" value="couchdb-java-viewserver.jar"/>
+  <property name="jar.name.views" value="javaviews.jar"/>
 
   <!-- internal properties -->
   <property name="src.dir" value="${project.home}/src"/>
@@ -42,17 +43,38 @@
     </javac>
   </target>
 
-  <target name="jar" depends="compile">
+  <target name="server.jar" depends="compile">
     <mkdir dir="${dist.dir}"/>
-    <jar destfile="${dist.dir}/${jar.file}" filesetmanifest="mergewithoutmain">
+    <jar destfile="${dist.dir}/${jar.name.server}"
+         filesetmanifest="mergewithoutmain">
+      <manifest>
+        <attribute name="Main-Class"
+                   value="com.cloudant.couchdbjavaserver.RunServer"/>
+        <attribute name="Class-Path" value="."/>
+      </manifest>
+      <fileset dir="${project.home}/bin">
+        <exclude name="**/javaviews/*"/>
+      </fileset>
+      <zipfileset excludes="META-INF/*.SF"
+                  src="${lib.dir}/org.json.jar"/>
+    </jar>
+  </target>
+
+  <target name="views.jar" depends="compile">
+    <mkdir dir="${dist.dir}"/>
+    <jar destfile="${dist.dir}/${jar.name.views}"
+         filesetmanifest="mergewithoutmain">
       <manifest>
         <attribute name="Main-Class"
                    value="com.cloudant.couchdbjavaserver.RunServer"/>
         <attribute name="Class-Path" value="."/>
       </manifest>
       <fileset dir="${project.home}/bin"/>
-      <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/org.json.jar"/>
+      <zipfileset excludes="META-INF/*.SF"
+                  src="${lib.dir}/org.json.jar"/>
     </jar>
   </target>
+
+  <target name="jars" depends="server.jar, views.jar"/>
 
 </project>
