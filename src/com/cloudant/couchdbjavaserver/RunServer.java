@@ -35,8 +35,8 @@ public class RunServer {
 				switch (c) {
 					case RESET:
 						Log("reset");
-						views = null;
-						libUrls = null;
+//						views = null;
+//						libUrls = null;
 						System.out.println("true");
 						break;
 					case ADD_LIBRARY:
@@ -47,7 +47,7 @@ public class RunServer {
 							System.out.println("true");
 							break;
 						} catch (MalformedURLException me) {
-							System.out.println("{\"error\":\"1\",\"reason\":\"" + me.getMessage() + "\"}");
+							System.out.println("{\"error\":\"add_library\",\"reason\":\"" + me.getMessage() + "\"}");
 							break;
 						}
 					case ADD_FUN:
@@ -67,7 +67,7 @@ public class RunServer {
 							System.out.println("true");
 							break;
 						} catch (Exception e) {
-							System.out.println("{\"error\":\"1\",\"reason\":\"" + e.getMessage() + "\"}");
+							System.out.println("{\"error\":\"add_fun\",\"reason\":\"" + e.getMessage() + "\"}");
 							break;
 						}
 					case MAP_DOC:
@@ -84,18 +84,26 @@ public class RunServer {
 							List<JavaView> reduceViews = new ArrayList<JavaView>();
 							final JSONArray reduceFuncs = arr.getJSONArray(1);
 							// a simple list of class names
-								for (int i = 0; i < reduceFuncs.length(); i++) {
-								reduceViews.add(getClass(reduceFuncs.getString(i),libUrls));
+							for (int i = 0; i < reduceFuncs.length(); i++) {
+								JavaView view = getClass(reduceFuncs.getString(i),libUrls);
+								reduceViews.add(view);
 							}
 							final JSONArray mapresults = arr.getJSONArray(2);
+							Log(mapresults.toString());
 							for (JavaView view : reduceViews) {
 								JSONArray thisResult = view.Reduce(mapresults);
-								reduceOut.put(thisResult.get(0));
+								if (thisResult != null && thisResult.length() > 0) {
+									reduceOut.put(new JSONArray().put(thisResult.get(0)));
+								} else {
+									throw new Exception("Error in reduce phase for " + view.getClass().getName());
+								}
 							}
-							System.out.println((new JSONArray().put("true").put(reduceOut.toString())).toString());
+							String outString = (new JSONArray().put(true).put(reduceOut)).toString();
+//							Log(outString);
+							System.out.println(outString);
 							break;
 						} catch (Exception e) {
-							System.out.println("{\"error\":\"1\",\"reason\":\"" + e.getMessage() + "\"}");
+							System.out.println("{\"error\":\"reduce\",\"reason\":\"" + e.getMessage() + "\"}");
 							break;							
 						}
 					case REREDUCE: 
@@ -109,13 +117,17 @@ public class RunServer {
 							}
 							final JSONArray mapresults = arr.getJSONArray(2);
 							for (JavaView view : rereduceViews) {
-								JSONArray thisResult = view.Reduce(mapresults);
-								rereduceOut.put(thisResult.get(0));
+								JSONArray thisResult = view.ReReduce(mapresults);
+								if (thisResult != null && thisResult.length() > 0) {
+									rereduceOut.put(new JSONArray().put(thisResult.get(0)));
+								} else {
+									throw new Exception("Error in rereduce phase for " + view.getClass().getName());
+								}
 							}
-							System.out.println((new JSONArray().put("true").put(rereduceOut.toString())).toString());
+							System.out.println((new JSONArray().put(true).put(rereduceOut)).toString());
 							break;
 						} catch (Exception e) {
-							System.out.println("{\"error\":\"1\",\"reason\":\"" + e.getMessage() + "\"}");
+							System.out.println("{\"error\":\"rereduce\",\"reason\":\"" + e.getMessage() + "\"}");
 							break;							
 						}
 					default: 

@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 /**
  * @author hardtke
+ * enumeration of valid couchdb view server requests
  *
  */
 public enum Command {
