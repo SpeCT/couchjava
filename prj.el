@@ -1,7 +1,8 @@
 (jde-project-file-version "1.0")
 (jde-set-variables
  ;; Set here default parameter for make program
- '(jde-make-args "jar")
+ ;'(jde-make-args "jar")
+
  ;; What should be put as java file header
  '(jde-gen-buffer-boilerplate
    (quote

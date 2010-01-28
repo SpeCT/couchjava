@@ -3,7 +3,7 @@ couchdb-java-viewserver is a java language view server for couchdb.
 To compile:
 
 1) Edit build.xml to include you local file paths (need to make this automatic)
-2) Do "ant" or "ant jar"
+2) Do "ant server.jar"
 3) This creates a runnable jar file.  Stick this in your desired location.
 
 Get the patch couchdb and compile:
@@ -135,6 +135,8 @@ Here, only the MapDoc function is defined. (Reduce doesn't work for some unknown
 
 Once you have your class, make it into a jar archive (being sure to include any needed non-standard libaries).
 
+Do "ant views.jar"
+
 You now need to load the view into couch db.  For this example, my database is named "wikipedia".  The design document looks like:
 
 {
@@ -153,7 +155,7 @@ curl -X PUT http://localhost:5984/wikipedia/_design/splittext -d @splittext.json
 
 Now you need to grab the revision id (using GET) in order to attach the jar file that contains your class:
 
-curl -X PUT http://localhost:5984/wikipedia/_design/test/javaviews.jar?rev=1-d58671fd0844f4466f498f22575ec308 --data-binary @javaviews.jar
+curl -X PUT http://localhost:5984/wikipedia/_design/splittext/javaviews.jar?rev=1-d58671fd0844f4466f498f22575ec308 --data-binary @javaviews.jar
 
 You are done -- you can run your view like you normally would:
 
