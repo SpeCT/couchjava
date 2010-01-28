@@ -2,9 +2,8 @@ couchdb-java-viewserver is a java language view server for couchdb.
 
 To compile:
 
-1) Edit build.xml to include you local file paths (need to make this automatic)
-2) Do "ant server.jar"
-3) This creates a runnable jar file.  Stick this in your desired location.
+1) Do "ant server.jar"
+2) This creates a runnable jar file in the dist directory, dist/couchdb-java-viewserver.jar.
 
 Get the patch couchdb and compile:
 
@@ -15,127 +14,19 @@ To attach to couchdb:
 1) Add the following lines to your couchdb local.ini file:
 
 [query_servers]
-java=/usr/bin/java -jar /home/hardtke/cloudant/couchdb-java-viewserver.jar
+java=/usr/bin/java -jar <full-path-to-jar-file>/couchdb-java-viewserver.jar
 
 where you have of course changed the path to the jar file!
 
 Implementing a view:
 
-A view can be created by creating a java class that implements the methods of the com.cloudant.couchdbjavaserver.JavaView interface.  Here's a simple example that takes the json field "title" and splits the text into words:
+There is an example view is com/cloudant/javaviews/SplitText.java
 
---- code ---
-
-package com.cloudant.javaviews
-;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import com.cloudant.couchdbjavaserver.*;
-
-public class SplitText implements JavaView {
-	
-	private String fieldToSplit;
-
-	public void Log(String logline) {
-		System.out.println();
-
-	}
-
-	public JSONArray MapDoc(JSONObject doc) {
-		JSONArray out = new JSONArray();
-		try {
-			String id = doc.getString("_id");
-			String rev = doc.getString("_rev");
-			String text = findFieldString(fieldToSplit, doc);
-			if (text != null && text.length() > 0) {
-				for (String s : text.split(" ")) {
-					out.put(new JSONArray().put(s).put(1));
-				}
-			} else {
-				out.put(new JSONArray());
-			}
-		} catch (JSONException je) {
-			out.put(new JSONArray());
-			Log("Malformed document: " + doc.toString());
-		}
-		return out;
-	}
-
-
-	@Override
-	public JSONArray ReReduce(JSONArray reduceResults) {
-		// TODO Auto-generated method stub
-		return new JSONArray();
-	}
-
-	@Override
-	public JSONArray Reduce(JSONArray mapResults) {
-		HashMap<String, Integer> wordCount = new HashMap<String,Integer>();
-		for (int i = 0; i < mapResults.length(); i++){
-			try {
-				JSONArray keyId = mapResults.getJSONArray(i).getJSONArray(0);
-				String key = keyId.getString(0);
-				if (wordCount.containsKey(key)) {
-					wordCount.put(key,wordCount.get(key) + 1);
-				}
-			} catch (JSONException je) {
-				Log("Fishy map result");
-			}
-		}
-		JSONObject job = new JSONObject();
-		for (String key : wordCount.keySet()) {
-			try {
-				job.put(key, wordCount.get(key));
-			} catch (JSONException je) {
-				Log("Problem update output array");
-			}
-		}
-		return new JSONArray().put(job);
-	}
-
-	public void Configure(String config) {
-		fieldToSplit = config;
-		return;		
-	}
-	
-	@SuppressWarnings("unchecked")
-	public String findFieldString(String keyToFind, JSONObject obj) {
-		if (obj.has(keyToFind)) {
-			try {
-				return obj.getString(keyToFind);
-			} catch (JSONException je){
-				Log("Field " + keyToFind + " is not a string");
-				return null;
-			}
-		}
-		Iterator<String> keys = (Iterator<String>)obj.keys();
-		while (keys.hasNext()) {
-			String key = keys.next();
-			try {
-				JSONObject jo = obj.getJSONObject(key);
-				String out = findFieldString(keyToFind, jo);
-				if (out != null) return out;
-			} catch (JSONException je) {
-				/* key not a JSONObject */
-			}
-		}
-		return null;
-	}
-
-}
-
---- end code ---
-
-Here, only the MapDoc function is defined. (Reduce doesn't work for some unknown reason).
-
+A view can be created by creating a java class that implements the methods of the com.cloudant.couchdbjavaserver.JavaView interface.
+ 
 Once you have your class, make it into a jar archive (being sure to include any needed non-standard libaries).
 
-Do "ant views.jar"
+To compile, do "ant views.jar".  This will create a jar archive dist/javaviews.jar.
 
 You now need to load the view into couch db.  For this example, my database is named "wikipedia".  The design document looks like:
 
@@ -144,8 +35,8 @@ You now need to load the view into couch db.  For this example, my database is n
     "language":"java",
     "views" : 
 	{
-	"title" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"title\"}"},
-	"text" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"text\"}"}
+	"title" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"title\"}","reduce":"com.cloudant.javaviews.SplitText"},
+	"text" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"text\"}","reduce":"com.cloudant.javaviews.SplitText"}
 	}    
 }
 
@@ -159,4 +50,11 @@ curl -X PUT http://localhost:5984/wikipedia/_design/splittext/javaviews.jar?rev=
 
 You are done -- you can run your view like you normally would:
 
-curl -X GET http://localhost:5984/wikipedia/_design/splittext/_view/title
+curl -X GET http://localhost:5984/wikipedia/_design/splittext/_view/text?key=\"an\"\&reduce=false
+
+gets all documents with "an" in field "text".
+
+curl -X GET http://localhost:5984/wikipedia/_design/splittext/_view/text?key=\"an\"
+
+counts documents with "an" in field "text"
+
