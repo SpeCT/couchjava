@@ -77,4 +77,11 @@
 
   <target name="jars" depends="server.jar, views.jar"/>
 
+    <target name="javadoc">
+     <mkdir  dir="${project.home}/docs"/>
+       <javadoc access="public" author="true" classpath="lib/org.json.jar" 
+destdir="${project.home}/docs" nodeprecated="false" nodeprecatedlist="false" noindex="false" 
+nonavbar="false" notree="false" packagenames="com.cloudant.couchdbjavaserver,com.cloudant.javaviews" source="1.6" sourcepath="src:lib" splitindex="true" use="true" version="true"/>
+    </target>
+
 </project>
