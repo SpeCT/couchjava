@@ -80,6 +80,7 @@ public class RunServer {
 						break;
 					case REDUCE: 
 						try {
+//							Log("reduce " + line);
 							JSONArray reduceOut = new JSONArray();
 							List<JavaView> reduceViews = new ArrayList<JavaView>();
 							final JSONArray reduceFuncs = arr.getJSONArray(1);
@@ -108,6 +109,7 @@ public class RunServer {
 						}
 					case REREDUCE: 
 						try {
+//							Log("rereduce " + line);
 							JSONArray rereduceOut = new JSONArray();
 							List<JavaView> rereduceViews = new ArrayList<JavaView>();
 							final JSONArray rereduceFuncs = arr.getJSONArray(1);
