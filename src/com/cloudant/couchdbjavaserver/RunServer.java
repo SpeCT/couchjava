@@ -34,7 +34,7 @@ public class RunServer {
 				}
 				switch (c) {
 					case RESET:
-						Log("reset");
+//						Log("reset");
 //						views = null;
 //						libUrls = null;
 						System.out.println("true");
@@ -90,7 +90,7 @@ public class RunServer {
 								reduceViews.add(view);
 							}
 							final JSONArray mapresults = arr.getJSONArray(2);
-							Log(mapresults.toString());
+//							Log(mapresults.toString());
 							for (JavaView view : reduceViews) {
 								JSONArray thisResult = view.Reduce(mapresults);
 								if (thisResult != null && thisResult.length() > 0) {

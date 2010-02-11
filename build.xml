@@ -68,7 +68,11 @@
       <fileset dir="${project.home}/bin" excludes="**/couchdbjavaserver/"/>
       <zipfileset excludes="META-INF/*.SF"
                   src="${lib.dir}/org.json.jar"/>
-    </jar>
+      <zipfileset excludes="META-INF/*.SF"
+                  src="${lib.dir}/lucene-core-3.0-dev.jar"/>
+      <zipfileset excludes="META-INF/*.SF"
+                  src="${lib.dir}/lucene-memory-3.0-dev.jar"/>
+     </jar>
   </target>
 
   <target name="jars" depends="server.jar, views.jar"/>
