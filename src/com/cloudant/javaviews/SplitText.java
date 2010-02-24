@@ -65,9 +65,9 @@ public class SplitText implements JavaView {
 		HashMap<String, Integer> wordCount = new HashMap<String,Integer>();
 		try {
 			for (int i = 0; i < reduceResults.length(); i++){
-				JSONArray jarr = reduceResults.getJSONArray(i);
-				for (int j = 0; j < jarr.length(); j++){
-					JSONObject jobj = jarr.getJSONObject(j);
+//				JSONArray jarr = reduceResults.getJSONArray(i);
+//				for (int j = 0; j < jarr.length(); j++){
+					JSONObject jobj = reduceResults.getJSONObject(i);
 					Iterator iter = jobj.keys();
 					while (iter.hasNext()) {
 						String key = (String)iter.next();
@@ -78,7 +78,7 @@ public class SplitText implements JavaView {
 							wordCount.put(key, value);
 						}
 					}
-				}
+//				}
 			}
 		} catch (JSONException je) {
 				Log("Fishy map result");
