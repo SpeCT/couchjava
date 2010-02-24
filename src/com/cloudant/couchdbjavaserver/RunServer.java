@@ -15,7 +15,6 @@ public class RunServer {
 	/**
 	 * @param args
 	 */
-	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		List<JavaView> views = new ArrayList<JavaView>();
@@ -47,7 +46,8 @@ public class RunServer {
 							System.out.println("true");
 							break;
 						} catch (MalformedURLException me) {
-							System.out.println("{\"error\":\"add_library\",\"reason\":\"" + me.getMessage() + "\"}");
+							String message = (me == null) ? " Unknown " : me.getMessage();
+							System.out.println("{\"error\":\"add_library\",\"reason\":\"" + message + "\"}");
 							break;
 						}
 					case ADD_FUN:
@@ -67,7 +67,8 @@ public class RunServer {
 							System.out.println("true");
 							break;
 						} catch (Exception e) {
-							System.out.println("{\"error\":\"add_fun\",\"reason\":\"" + e.getMessage() + "\"}");
+							String message = (e == null) ? " Unknown " : e.getMessage();
+							System.out.println("{\"error\":\"add_fun\",\"reason\":\"" + message + "\"}");
 							break;
 						}
 					case MAP_DOC:
@@ -94,7 +95,8 @@ public class RunServer {
 							for (JavaView view : reduceViews) {
 								JSONArray thisResult = view.Reduce(mapresults);
 								if (thisResult != null && thisResult.length() > 0) {
-									reduceOut.put(new JSONArray().put(thisResult.get(0)));
+//									reduceOut.put(new JSONArray().put(thisResult.get(0)));
+									reduceOut.put(thisResult.get(0));
 								} else {
 									throw new Exception("Error in reduce phase for " + view.getClass().getName());
 								}
@@ -104,7 +106,8 @@ public class RunServer {
 							System.out.println(outString);
 							break;
 						} catch (Exception e) {
-							System.out.println("{\"error\":\"reduce\",\"reason\":\"" + e.getMessage() + "\"}");
+							String message = (e == null) ? " Unknown " : e.getMessage();
+							System.out.println("{\"error\":\"reduce\",\"reason\":\"" + message + "\"}");
 							break;							
 						}
 					case REREDUCE: 
@@ -121,7 +124,8 @@ public class RunServer {
 							for (JavaView view : rereduceViews) {
 								JSONArray thisResult = view.ReReduce(mapresults);
 								if (thisResult != null && thisResult.length() > 0) {
-									rereduceOut.put(new JSONArray().put(thisResult.get(0)));
+//									rereduceOut.put(new JSONArray().put(thisResult.get(0)));
+									rereduceOut.put(thisResult.get(0));
 								} else {
 									throw new Exception("Error in rereduce phase for " + view.getClass().getName());
 								}
@@ -129,7 +133,8 @@ public class RunServer {
 							System.out.println((new JSONArray().put(true).put(rereduceOut)).toString());
 							break;
 						} catch (Exception e) {
-							System.out.println("{\"error\":\"rereduce\",\"reason\":\"" + e.getMessage() + "\"}");
+							String message = (e == null) ? " Unknown " : e.getMessage();
+							System.out.println("{\"error\":\"rereduce\",\"reason\":\"" + message + "\"}");
 							break;							
 						}
 					default: 
@@ -137,10 +142,11 @@ public class RunServer {
 						throw new JSONException("Unrecognized view server command: " + event);
 				}
 			}  catch (JSONException je) {
-				JSONArray out = new JSONArray();
-				out.put("log");
-				out.put(je.toString() + " " + line);
-				System.out.println(out.toString());
+				String message = (je == null) ? " Unknown " : je.getMessage();
+				Log(message);
+			}	catch (Exception e) {
+				String message = (e == null) ? " Unknown " : e.getMessage();
+				Log(message);				
 			}
 		}
 
@@ -149,7 +155,11 @@ public class RunServer {
 	public static void Log(String message) {
 		JSONArray out = new JSONArray();
 		out.put("log");
-		out.put(message);
+		if (message != null) {
+			out.put(message);
+		} else {
+			out.put("Log called with null string");
+		}
 		System.out.println(out.toString());		
 	}
 

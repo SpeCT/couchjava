@@ -1,6 +1,7 @@
 package com.cloudant.javaviews;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -15,6 +16,8 @@ import org.apache.lucene.util.*;
 public class LuceneDoc implements JavaView {
 
 	private Map<String, Float> fieldsToStore = null;
+	
+	private int reduceCount = 0;
 
 	public void Log(String message) {
 		JSONArray out = new JSONArray();
@@ -25,8 +28,9 @@ public class LuceneDoc implements JavaView {
 
 	public JSONArray MapDoc(JSONObject doc) {
 		JSONArray out = new JSONArray();
+		String id = null;
 		try {
-			String id = doc.getString("_id");
+			id = doc.getString("_id");
 			String rev = doc.getString("_rev");
 			// Directory ramDir = new RAMDirectory();
 			// IndexWriter writer = new IndexWriter(ramDir, new
@@ -37,7 +41,9 @@ public class LuceneDoc implements JavaView {
 			MemoryIndex index = new MemoryIndex();
 			for (String field : fieldsToStore.keySet()) {
 				String text = findFieldString(field, doc);
-				index.addField(field, text, analyzer, fieldsToStore.get(field));
+				if (field != null && text != null) {
+					index.addField(field, text, analyzer, fieldsToStore.get(field));
+				}
 			}
 			out = index.jsonMap();
 		} catch (JSONException je) {
@@ -45,7 +51,9 @@ public class LuceneDoc implements JavaView {
 			Log("Malformed document: " + doc.toString());
 		} catch (Exception e) {
 			out.put(new JSONArray());
-			Log("Exception: " + e.toString());
+			if (e != null ) {
+				Log("Exception: " + e.toString());
+			}
 		}
 		return out;
 	}
@@ -58,22 +66,53 @@ public class LuceneDoc implements JavaView {
 			return new JSONArray().put(JSONObject.NULL);
 		}
 		JSONArray allDocs = new JSONArray();
+		boolean good = true;
+		HashMap<String, JSONArray> wordCount = new HashMap<String, JSONArray>();
+//		HashSet<String> uniques = new HashSet<String>();
 		try {
-			for (int i = 0; i < reduceResults.length(); i++) {
-				JSONArray jarr = reduceResults.getJSONArray(i);
-				for (int j = 0; j < jarr.length(); j++) {
-					JSONObject jobj = jarr.getJSONObject(j);
-					allDocs.put(jobj);
+				for (int j = 0; j < reduceResults.length(); j++) {
+					try {
+					JSONObject jobj = reduceResults.getJSONObject(j);
+//					if (jobj.has("FIELDS")) {
+//						JSONArray fields = jobj.getJSONArray("FIELDS");
+//						for (int k = 0; k < fields.length(); k++) {
+//							uniques.add(fields.getString(k));
+//						}
+//					} else {
+					Iterator<String> iter = (Iterator<String>)jobj.keys();
+					while (iter.hasNext()) {
+						String key = iter.next();
+						if (wordCount.containsKey(key)) {
+							wordCount.put(key, wordCount.get(key).put(jobj.getJSONArray(key)));
+						} else {
+							wordCount.put(key, jobj.getJSONArray(key));
+						}
+					}
+						allDocs.put(jobj);
+					} catch (JSONException je) {
+						Log(je.getMessage());
+						good = false;
+					}
+				}
+			JSONObject job = new JSONObject();
+			if (wordCount.size() > 0) {
+				for (String key : wordCount.keySet()) {
+					try {
+						job.put(key, wordCount.get(key));
+					} catch (JSONException je) {
+						Log("Problem update output array");
+					}
+				}
+				if (job.length() == 0) {
+					return new JSONArray().put(JSONObject.NULL);
+				} else {
+					return new JSONArray().put(job);
 				}
 			}
-		} catch (JSONException je) {
-			Log("Fishy map result");
+		} 	catch (Exception e) {
+			Log (e.getMessage());
 		}
-		if (allDocs.length() > 0) {
-				return new JSONArray().put(allDocs);
-		} else {
-				return new JSONArray().put(JSONObject.NULL);
-		}
+		return new JSONArray().put(JSONObject.NULL);
 	}
 
 	@Override
@@ -83,27 +122,50 @@ public class LuceneDoc implements JavaView {
 			return new JSONArray().put(JSONObject.NULL);
 		}
 		HashMap<String, JSONArray> wordCount = new HashMap<String, JSONArray>();
+		HashMap<String, JSONArray> docCount = new HashMap<String, JSONArray>();
+		HashSet<String> uniques = new HashSet<String>();
 		for (int i = 0; i < mapResults.length(); i++) {
 			try {
 				JSONArray keyId = mapResults.getJSONArray(i).getJSONArray(0);
 				String key = keyId.getString(0);
 				String id = keyId.getString(1);
+	//			String idkey = "ID" + id;
 				// map result is an array of json objects
 				JSONArray arr = mapResults.getJSONArray(i).getJSONArray(1);
 				for (int j = 0; j < arr.length(); j++) {
 					JSONObject thisObj = arr.getJSONObject(j);
+//					try {
+//						uniques.add(thisObj.getString("field"));
+//					} catch (JSONException je) {
+						
+//					}
+					JSONObject other = new JSONObject(thisObj, JSONObject.getNames(thisObj));
 					thisObj.put("_id", id);
+					other.put("term", key);
 					if (wordCount.containsKey(key)) {
 						wordCount.put(key, wordCount.get(key).put(thisObj));
 					} else {
 						wordCount.put(key, (new JSONArray()).put(thisObj));
 					}
+//					if (docCount.containsKey(idkey)) {
+//						docCount.put(idkey, docCount.get(idkey).put(other));
+//					} else {
+//						docCount.put(idkey, (new JSONArray()).put(other));
+//					}
 				}
 			} catch (JSONException je) {
 				Log("Fishy map result");
 			}
 		}
 		JSONObject job = new JSONObject();
+//		if (!uniques.isEmpty()) {
+//			try {
+//				job.put("FIELDS", uniques);
+//			} catch (JSONException je) {
+//				Log("error adding uniques");
+//			}
+//		}
+//		wordCount.putAll(docCount);
 		if (wordCount.size() > 0) {
 			for (String key : wordCount.keySet()) {
 				try {
@@ -112,6 +174,10 @@ public class LuceneDoc implements JavaView {
 					Log("Problem update output array");
 				}
 			}
+//			if (reduceCount < 5) {
+//				Log(job.toString());
+//				reduceCount++;
+//			}
 			if (job.length() == 0) {
 				return new JSONArray().put(JSONObject.NULL);
 			} else {
