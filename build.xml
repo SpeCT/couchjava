@@ -38,7 +38,8 @@
   <target name="compile" depends="init">
     <mkdir dir="${bin.dir}"/>
     <javac srcdir="${src.dir}"
-           destdir="${bin.dir}">
+           destdir="${bin.dir}"
+           debug="true" debuglevel="lines">
       <classpath refid="build.path"/>
     </javac>
   </target>
@@ -55,6 +56,8 @@
       <fileset dir="${project.home}/bin" excludes="**/javaviews/"/>
       <zipfileset excludes="META-INF/*.SF"
                   src="${lib.dir}/org.json.jar"/>
+      <zipfileset excludes="META-INF/*.SF"
+                  src="${lib.dir}/ejje.jar"/>
     </jar>
   </target>
 
@@ -69,9 +72,9 @@
       <zipfileset excludes="META-INF/*.SF"
                   src="${lib.dir}/org.json.jar"/>
       <zipfileset excludes="META-INF/*.SF"
-                  src="${lib.dir}/lucene-core-3.0-dev.jar"/>
+                  src="${lib.dir}/lucene-core-3.1-dev.jar"/>
       <zipfileset excludes="META-INF/*.SF"
-                  src="${lib.dir}/lucene-memory-3.0-dev.jar"/>
+                  src="${lib.dir}/lucene-memory-3.1-dev.jar"/>
      </jar>
   </target>
 
@@ -79,8 +82,8 @@
 
     <target name="javadoc">
      <mkdir  dir="${project.home}/docs"/>
-       <javadoc access="public" author="true" classpath="lib/org.json.jar" 
-destdir="${project.home}/docs" nodeprecated="false" nodeprecatedlist="false" noindex="false" 
+       <javadoc access="public" author="true" classpath="lib/org.json.jar"
+destdir="${project.home}/docs" nodeprecated="false" nodeprecatedlist="false" noindex="false"
 nonavbar="false" notree="false" packagenames="com.cloudant.couchdbjavaserver,com.cloudant.javaviews" source="1.6" sourcepath="src:lib" splitindex="true" use="true" version="true"/>
     </target>
 
