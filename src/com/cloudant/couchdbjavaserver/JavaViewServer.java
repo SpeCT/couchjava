@@ -51,7 +51,7 @@ public class JavaViewServer extends ViewServer {
 				return "true";
 			case ADD_LIBRARY:
 				String urlString = binstr(data, 1);
-				Log("add_library " + urlString);
+				//Log("add_library " + urlString);
 				try {
 					if( libUrls.add(new URL(urlString)) ) {
 						return "true";
@@ -59,14 +59,13 @@ public class JavaViewServer extends ViewServer {
 						return "false";
 					}
 				} catch (MalformedURLException me) {
-					return "{\"error\":\"add_library\",\"reason\":\""
-							+ me.getMessage() + "\"}";
+					return error(me);
 				}
 			case ADD_FUN:
 				try {
 					JSONObject jobj = new JSONObject(binstr(data,1));
 					String name = jobj.getString("classname");
-					Log("add_fun " + name);
+					//Log("add_fun " + name);
 					JavaView view = getClass(name, libUrls);
 					try {
 						String config = jobj.getString("configure");
@@ -82,8 +81,7 @@ public class JavaViewServer extends ViewServer {
 					}
 					
 				} catch (Exception e) {
-					return "{\"error\":\"add_fun\",\"reason\":\""
-							+ e.getMessage() + "\"}";
+					return error(e);
 				}
 			case MAP_DOC:
 				JSONArray ret = new JSONArray();
@@ -91,14 +89,13 @@ public class JavaViewServer extends ViewServer {
 				for (JavaView view : views) {
 					ret.put(view.MapDoc(jsondoc));
 				}
-				System.out.println(ret.toString());
 				return ret.toString();
 			case REDUCE:
 				try {
-					// Log("reduce " + line);
+					// Log("reduce");
 					JSONArray reduceOut = new JSONArray();
 					List<JavaView> reduceViews = new ArrayList<JavaView>();
-					final JSONArray reduceFuncs = new JSONArray(data);
+					final JSONArray reduceFuncs = arr(data,1);
 					// a simple list of class names
 					for (int i = 0; i < reduceFuncs.length(); i++) {
 						JavaView view = getClass(reduceFuncs.getString(i),
@@ -110,8 +107,8 @@ public class JavaViewServer extends ViewServer {
 					for (JavaView view : reduceViews) {
 						JSONArray thisResult = view.Reduce(mapresults);
 						if (thisResult != null && thisResult.length() > 0) {
-							reduceOut.put(new JSONArray()
-									.put(thisResult.get(0)));
+							Log("reduce result: " + thisResult);
+							reduceOut.put(thisResult.get(0));
 						} else {
 							throw new Exception("Error in reduce phase for "
 									+ view.getClass().getName());
@@ -119,15 +116,14 @@ public class JavaViewServer extends ViewServer {
 					}
 					String outString = (new JSONArray().put(true)
 							.put(reduceOut)).toString();
-					// Log(outString);
+					Log(outString);
 					return outString;
 				} catch (Exception e) {
-					return "{\"error\":\"reduce\",\"reason\":\""
-							+ e.getMessage() + "\"}";
+					return error(e);
 				}
 			case REREDUCE:
 				try {
-					// Log("rereduce " + line);
+					Log("rereduce");
 					JSONArray rereduceOut = new JSONArray();
 					List<JavaView> rereduceViews = new ArrayList<JavaView>();
 					final JSONArray rereduceFuncs = arr(data,1);
@@ -140,8 +136,7 @@ public class JavaViewServer extends ViewServer {
 					for (JavaView view : rereduceViews) {
 						JSONArray thisResult = view.ReReduce(mapresults);
 						if (thisResult != null && thisResult.length() > 0) {
-							rereduceOut.put(new JSONArray().put(thisResult
-									.get(0)));
+							rereduceOut.put(thisResult.get(0));
 						} else {
 							throw new Exception("Error in rereduce phase for "
 									+ view.getClass().getName());
@@ -150,39 +145,44 @@ public class JavaViewServer extends ViewServer {
 					return (new JSONArray().put(true).put(rereduceOut))
 							.toString();
 				} catch (Exception e) {
-					return "{\"error\":\"rereduce\",\"reason\":\""
-							+ e.getMessage() + "\"}";
+					e.printStackTrace();
+					return error(e);
 				}
 			default:
 				throw new JSONException("Unrecognized view server command: "
 						+ event);
 			}
 		} catch (JSONException je) {
-			JSONArray out = new JSONArray();
-			out.put("log");
-			out.put(je.toString() + " " + data.toString());
-			return out.toString();
+			return error(je);
 		}
 	}
 
+	private String error(Exception e) {
+		e.printStackTrace();
+		return error(e);
+	}
+	
 	// Erlang -> JSON helper methods
 	private String binstr(OtpErlangList data, int i) {
 		return (String)to_json( data.elementAt(i));
 	}
 
 	private JSONArray arr(OtpErlangList data, int i) {
-		JSONArray ret = new JSONArray();
 		try {
-			ret.put( to_json( data.elementAt(i) ) );
+			return to_json( (OtpErlangList)data.elementAt(i) );
 		} catch( Exception e ) {
-			System.out.println("bad array JSON");
 			e.printStackTrace();
 		}
-		return ret;
+		return null;
 	}
 
 	private JSONObject obj(OtpErlangList data, int i) {
-		return to_json( (OtpErlangTuple)data.elementAt(i) );
+		try {
+			return to_json( (OtpErlangTuple)data.elementAt(i) );
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	// logger

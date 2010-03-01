@@ -43,7 +43,7 @@ public class JVSMboxThread implements Runnable {
         while( true ) {
             try {
             	o = mbox.receive();
-                System.out.println("raw msg: " + o);
+                //System.out.println("raw msg: " + o);
                 
                 if( o instanceof OtpErlangTuple ) {
                     // process message
