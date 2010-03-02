@@ -39,6 +39,7 @@ public class JavaViewServer extends ViewServer {
 			if (data.arity() == 0)
 				throw new JSONException("Empty JSON array");
 			String event = binstr(data,0);
+			Log("prompt '" + event + "'");
 			Command c = Command.getCommandFromString(event);
 			if (c == null) {
 				throw new JSONException("Unrecognized view server command: "
@@ -92,7 +93,7 @@ public class JavaViewServer extends ViewServer {
 				return ret.toString();
 			case REDUCE:
 				try {
-					// Log("reduce");
+					Log("reduce");
 					JSONArray reduceOut = new JSONArray();
 					List<JavaView> reduceViews = new ArrayList<JavaView>();
 					final JSONArray reduceFuncs = arr(data,1);
@@ -107,7 +108,6 @@ public class JavaViewServer extends ViewServer {
 					for (JavaView view : reduceViews) {
 						JSONArray thisResult = view.Reduce(mapresults);
 						if (thisResult != null && thisResult.length() > 0) {
-							Log("reduce result: " + thisResult);
 							reduceOut.put(thisResult.get(0));
 						} else {
 							throw new Exception("Error in reduce phase for "
@@ -116,7 +116,7 @@ public class JavaViewServer extends ViewServer {
 					}
 					String outString = (new JSONArray().put(true)
 							.put(reduceOut)).toString();
-					Log(outString);
+					//Log(outString);
 					return outString;
 				} catch (Exception e) {
 					return error(e);
@@ -142,8 +142,10 @@ public class JavaViewServer extends ViewServer {
 									+ view.getClass().getName());
 						}
 					}
-					return (new JSONArray().put(true).put(rereduceOut))
-							.toString();
+					String outString = (new JSONArray().put(true)
+							.put(rereduceOut)).toString();
+					//Log(outString);
+					return outString;
 				} catch (Exception e) {
 					e.printStackTrace();
 					return error(e);

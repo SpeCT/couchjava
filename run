@@ -1,0 +1,3 @@
+#!/bin/bash
+
+java -cp ./dist/couchdb-java-viewserver.jar com.cloudant.ejje.Ejje ejje@boorad.local doubledoozie

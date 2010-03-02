@@ -59,16 +59,18 @@ public class JVSMboxThread implements Runnable {
                     	// craft response                    	
                     	resp = new OtpErlangString(server.prompt(data));
 	                    mbox.send( from, resp );
+	                    System.out.println("prompt end");
                     }
                 }
             } catch( OtpErlangExit exit ) {
-            	System.out.println("mailbox thread closing... later, scro");
             	mbox.close();
+            	break;
             } catch( Exception e ) {
             	System.out.println("Exception in JVSMboxThread.run");
                 e.printStackTrace();
                 break;
             }
         }
+        System.out.println("mailbox thread closing... later, scro");
     }
 }
