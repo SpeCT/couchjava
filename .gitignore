@@ -4,3 +4,4 @@ docs/*
 *~
 semantic.cache
 build.properties
+views/splittext.json
