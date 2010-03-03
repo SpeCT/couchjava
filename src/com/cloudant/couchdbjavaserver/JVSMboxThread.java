@@ -60,7 +60,7 @@ public class JVSMboxThread implements Runnable {
                         data = (OtpErlangList)( msg.elementAt(2) );
                     	// craft response                    	
                     	resp = new OtpErlangString(server.prompt(data));
-	                    mbox.send( from, resp );
+	                    mbox.send( from, response(resp) );
 	                    System.out.println("prompt end");
                     } else if( req.atomValue().equals("stop")) {
                     	mbox.send( from, new OtpErlangAtom("stop") );
@@ -80,4 +80,12 @@ public class JVSMboxThread implements Runnable {
         }
         System.out.println("mailbox thread closing: " + this.name);
     }
+    
+    private OtpErlangTuple response(OtpErlangString resp) {
+    	OtpErlangObject[] arr = new OtpErlangObject[2];
+    	arr[0] = new OtpErlangString(this.name);
+    	arr[1] = resp;
+    	return new OtpErlangTuple(arr);
+    }
+
 }

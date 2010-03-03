@@ -41,8 +41,8 @@ public class Ejje {
                     o = mbox.receive();
                     if( o instanceof OtpErlangTuple ) {
                         msg = (OtpErlangTuple)o;
-                        from = (OtpErlangPid)( msg.elementAt(0) );
-                        req = (OtpErlangAtom)( msg.elementAt(1) );
+                        req = (OtpErlangAtom)( msg.elementAt(0) );
+                        from = (OtpErlangPid)( msg.elementAt(1) );
                         if( req.atomValue().equals("mbox") ) {
                             data = (OtpErlangString)( msg.elementAt(2) );
                             ref = (OtpErlangString)( msg.elementAt(3) );
