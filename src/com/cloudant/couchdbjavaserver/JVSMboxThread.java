@@ -51,19 +51,22 @@ public class JVSMboxThread implements Runnable {
                     // process message
                     msg = (OtpErlangTuple)o;
                     req = (OtpErlangAtom)( msg.elementAt(0) );
-                    data = (OtpErlangList)( msg.elementAt(1) );
-                    from = (OtpErlangPid)( msg.elementAt(2) );
+                    from = (OtpErlangPid)( msg.elementAt(1) );
                     
                     // link to calling pid so this mbox dies if pid dies	
-                    mbox.link(from);
+                    //mbox.link(from);
 
                     if( req.atomValue().equals("prompt")) {
+                        data = (OtpErlangList)( msg.elementAt(2) );
                     	// craft response                    	
                     	resp = new OtpErlangString(server.prompt(data));
 	                    mbox.send( from, resp );
 	                    System.out.println("prompt end");
                     } else if( req.atomValue().equals("stop")) {
+                    	mbox.send( from, new OtpErlangAtom("stop") );
                     	running = false;
+                    } else {
+                    	System.out.println("req: " + req.atomValue());
                     }
                 }
             } catch( OtpErlangExit exit ) {
