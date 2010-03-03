@@ -24,13 +24,23 @@ import com.ericsson.otp.erlang.OtpNode;
 
 public class JavaViewServer extends ViewServer {
 
+	private String mboxname = "";
+	
 	private List<JavaView> views = new ArrayList<JavaView>();
 	private List<URL> libUrls = new ArrayList<URL>();
 
 	public JavaViewServer() {}
 	
+	/*
+	 * public functions
+	 */
+
 	public Runnable getMboxThread(OtpNode node, String name) {
 		return new JVSMboxThread(node, name);
+	}
+
+	public void setName(String mboxname) {
+		this.mboxname = mboxname;
 	}
 
 	public String prompt(OtpErlangList data) {
@@ -93,7 +103,7 @@ public class JavaViewServer extends ViewServer {
 				return ret.toString();
 			case REDUCE:
 				try {
-					Log("reduce");
+					//Log("reduce");
 					JSONArray reduceOut = new JSONArray();
 					List<JavaView> reduceViews = new ArrayList<JavaView>();
 					final JSONArray reduceFuncs = arr(data,1);
@@ -159,6 +169,10 @@ public class JavaViewServer extends ViewServer {
 		}
 	}
 
+	/*
+	 * private functions
+	 */
+	
 	private String error(Exception e) {
 		e.printStackTrace();
 		return error(e);
@@ -190,6 +204,7 @@ public class JavaViewServer extends ViewServer {
 	// logger
 	private void Log(String message) {
 		JSONArray out = new JSONArray();
+		out.put(mboxname);
 		out.put("log");
 		out.put(message);
 		System.out.println(out.toString());
