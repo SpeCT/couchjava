@@ -36,11 +36,13 @@ public class JVSMboxThread implements Runnable {
     	OtpMbox mbox = null;
     	try {
     		mbox = node.createMbox(this.name);
+    		server.setName(this.name);
     	} catch( Exception e ) {
     		e.printStackTrace();
     	}
-
-        while( true ) {
+    	
+    	boolean running = true;
+        while( running ) {
             try {
             	o = mbox.receive();
                 //System.out.println("raw msg: " + o);
@@ -60,6 +62,8 @@ public class JVSMboxThread implements Runnable {
                     	resp = new OtpErlangString(server.prompt(data));
 	                    mbox.send( from, resp );
 	                    System.out.println("prompt end");
+                    } else if( req.atomValue().equals("stop")) {
+                    	running = false;
                     }
                 }
             } catch( OtpErlangExit exit ) {
@@ -71,6 +75,6 @@ public class JVSMboxThread implements Runnable {
                 break;
             }
         }
-        System.out.println("mailbox thread closing... later, scro");
+        System.out.println("mailbox thread closing: " + this.name);
     }
 }
