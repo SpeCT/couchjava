@@ -61,7 +61,6 @@ public class JVSMboxThread implements Runnable {
                     	// craft response                    	
                     	resp = new OtpErlangString(server.prompt(data));
 	                    mbox.send( from, response(resp) );
-	                    System.out.println("prompt end");
                     } else if( req.atomValue().equals("stop")) {
                     	mbox.send( from, new OtpErlangAtom("stop") );
                     	running = false;

@@ -49,7 +49,7 @@ public class JavaViewServer extends ViewServer {
 			if (data.arity() == 0)
 				throw new JSONException("Empty JSON array");
 			String event = binstr(data,0);
-			Log("prompt '" + event + "'");
+			//Log("prompt '" + event + "'");
 			Command c = Command.getCommandFromString(event);
 			if (c == null) {
 				throw new JSONException("Unrecognized view server command: "
@@ -133,7 +133,7 @@ public class JavaViewServer extends ViewServer {
 				}
 			case REREDUCE:
 				try {
-					Log("rereduce");
+					//Log("rereduce");
 					JSONArray rereduceOut = new JSONArray();
 					List<JavaView> rereduceViews = new ArrayList<JavaView>();
 					final JSONArray rereduceFuncs = arr(data,1);
