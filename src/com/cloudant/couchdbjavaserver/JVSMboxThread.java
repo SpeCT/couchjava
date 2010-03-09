@@ -10,7 +10,13 @@ import com.ericsson.otp.erlang.OtpErlangTuple;
 import com.ericsson.otp.erlang.OtpMbox;
 import com.ericsson.otp.erlang.OtpNode;
 
-
+/**
+ * A mailbox process that runs as a Java thread.  Messages are received from
+ * Erlang and dispatched to a JavaViewServer instance
+ * 
+ * @author boorad
+ *
+ */
 public class JVSMboxThread implements Runnable {
 
 	private OtpNode node;
