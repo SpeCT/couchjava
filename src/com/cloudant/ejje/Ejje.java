@@ -13,13 +13,31 @@ import com.ericsson.otp.erlang.OtpErlangTuple;
 import com.ericsson.otp.erlang.OtpMbox;
 import com.ericsson.otp.erlang.OtpNode;
 
+/**
+ * Ejje class is the main() entry point for a native Java View Server for
+ * CouchDB.  The while loop establishes the 'ejje_main' registered mailbox
+ * for this Java 'node' and Erlang can send messages.
+ * 
+ * The main purpose of this class is to accept 'mbox' requests from Erlang for
+ * new mailboxes and spawn a thread (in a thread pool) for each request.  Each
+ * mailbox thread is a JVSMboxThread object, executing its run() method.
+ * 
+ * The 'list' message returns a list of the active mbox threads.
+ * 
+ * 
+ * @author boorad
+ *
+ */
 public class Ejje {
 
     // set up mbox thread pool
     //  optimize to suit later (FixedThreadPool, etc)
     static ExecutorService threadExecutor = Executors.newCachedThreadPool();
-//	static ExecutorService threadExecutor = Executors.newFixedThreadPool(24);
+    //static ExecutorService threadExecutor = Executors.newFixedThreadPool(24);
 
+    /**
+     * main entrypoint
+     */
     public static void main( String[] args ) {
 
     	boolean running = true;
@@ -66,6 +84,11 @@ public class Ejje {
         }
     }
 
+    /**
+     * generate an Erlang error tuple to send back
+     * @param err
+     * @return
+     */
     static OtpErlangTuple error_tuple(String err) {
         OtpErlangObject ret[] = new OtpErlangObject[2];
         ret[0] = new OtpErlangAtom("error");
@@ -73,6 +96,11 @@ public class Ejje {
         return new OtpErlangTuple(ret);
     }
 
+    /**
+     * return a list of active mailboxes
+     * @param node
+     * @return
+     */
     static OtpErlangTuple list_mailboxes(OtpNode node) {
         OtpErlangObject ret[] = new OtpErlangObject[2];
         ret[0] = new OtpErlangAtom("ok");
@@ -85,6 +113,13 @@ public class Ejje {
         return new OtpErlangTuple(ret);
     }
 
+    /**
+     * start a new mbox thread and return an Erlang tuple with the thread's name
+     * @param node
+     * @param clazz
+     * @param ref
+     * @return
+     */
     @SuppressWarnings("unchecked")
     static OtpErlangTuple new_mbox(OtpNode node, OtpErlangString clazz,
     		OtpErlangString ref) {
