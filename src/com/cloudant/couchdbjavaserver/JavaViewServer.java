@@ -26,8 +26,10 @@ public class JavaViewServer extends ViewServer {
 
 	private String mboxname = "";
 	
+//	private List<JavaView> views = new ArrayList<JavaView>();
 	private List<JavaView> views = new ArrayList<JavaView>();
-	private List<URL> libUrls = new ArrayList<URL>();
+	private ClassUrls classUrls = ClassUrls.getInstance();
+//	private List<URL> libUrls = new ArrayList<URL>();
 
 	public JavaViewServer() {}
 	
@@ -57,27 +59,23 @@ public class JavaViewServer extends ViewServer {
 			}
 			switch (c) {
 			case RESET:
-				views.clear();
-				libUrls.clear();
+//				views.clear();
 				return "true";
 			case ADD_LIBRARY:
 				String urlString = binstr(data, 1);
-				//Log("add_library " + urlString);
-				try {
-					if( libUrls.add(new URL(urlString)) ) {
-						return "true";
-					} else {
-						return "false";
-					}
-				} catch (MalformedURLException me) {
-					return error(me);
+//				Log("add_library " + urlString);
+				boolean res = classUrls.addUrl(urlString);
+				if( res ) {
+					return "true";
+				} else {
+					return "false";
 				}
 			case ADD_FUN:
 				try {
 					JSONObject jobj = new JSONObject(binstr(data,1));
 					String name = jobj.getString("classname");
 					//Log("add_fun " + name);
-					JavaView view = getClass(name, libUrls);
+					JavaView view = getClass(name, classUrls.getUrls());
 					try {
 						String config = jobj.getString("configure");
 						view.Configure(config);
@@ -110,7 +108,7 @@ public class JavaViewServer extends ViewServer {
 					// a simple list of class names
 					for (int i = 0; i < reduceFuncs.length(); i++) {
 						JavaView view = getClass(reduceFuncs.getString(i),
-								libUrls);
+								classUrls.getUrls());
 						reduceViews.add(view);
 					}
 					final JSONArray mapresults = arr(data,2);
@@ -140,7 +138,7 @@ public class JavaViewServer extends ViewServer {
 					// a simple list of class names
 					for (int i = 0; i < rereduceFuncs.length(); i++) {
 						rereduceViews.add(getClass(rereduceFuncs.getString(i),
-								libUrls));
+								classUrls.getUrls()));
 					}
 					final JSONArray mapresults = arr(data,2);
 					for (JavaView view : rereduceViews) {
