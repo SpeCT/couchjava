@@ -23,6 +23,7 @@ public class ClassUrls {
 		 
 		   public static ClassUrls getInstance() {
 		     return SingletonHolder.INSTANCE;
+//			   return new ClassUrls();
 		   }
 		   
 		   public boolean addUrl(String url) {
@@ -39,5 +40,9 @@ public class ClassUrls {
 		   
 		   public List<URL> getUrls() {
 			   return libUrls;
+		   }
+		   
+		   void clear() {
+			   libUrls.clear();
 		   }
 }

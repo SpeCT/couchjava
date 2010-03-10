@@ -58,8 +58,13 @@ public class LuceneDoc implements JavaView {
 		return out;
 	}
 
-	@Override
 	public JSONArray ReReduce(JSONArray reduceResults) {
+//		return new JSONArray().put(JSONObject.NULL);
+		return ReReduceAggregate(reduceResults);
+	}
+	
+
+	public JSONArray ReReduceAggregate(JSONArray reduceResults) {
 		// TODO Auto-generated method stub
 		if (reduceResults == null || reduceResults.length() == 0) {
 			Log("Reduce called with empty map");
@@ -115,8 +120,12 @@ public class LuceneDoc implements JavaView {
 		return new JSONArray().put(JSONObject.NULL);
 	}
 
-	@Override
 	public JSONArray Reduce(JSONArray mapResults) {
+//		return new JSONArray().put(JSONObject.NULL);
+		return ReduceAggregate(mapResults);
+	}
+	
+	private JSONArray ReduceAggregate(JSONArray mapResults) {
 		if (mapResults == null || mapResults.length() == 0) {
 			Log("Reduce called with empty map");
 			return new JSONArray().put(JSONObject.NULL);

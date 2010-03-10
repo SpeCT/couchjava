@@ -3,6 +3,7 @@ package com.cloudant.ejje;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.ericsson.otp.erlang.OtpErlangAtom;
 import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangChar;
 import com.ericsson.otp.erlang.OtpErlangFloat;
@@ -101,6 +102,18 @@ public class ErlangJson {
 
 			} else if (o instanceof OtpErlangList) {
 				return to_json( ((OtpErlangList) o) );
+
+			} else if (o instanceof OtpErlangAtom) {
+				OtpErlangAtom atom = (OtpErlangAtom) o;
+				String value = atom.atomValue();
+				if ("null".equals(value)) { 
+					return JSONObject.NULL;					
+				} else if ("true".equals(value) || "false".equals(value)) {
+					return atom.booleanValue();
+				} else {
+					System.out.println("Unknonw Atom Erlang type: " + o);
+					return o.toString();
+				}
 
 			} else {
 				System.out.println("unhandled Erlang type: " + o);

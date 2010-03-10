@@ -1,6 +1,5 @@
 package com.cloudant.couchdbjavaserver;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -44,10 +43,9 @@ public class JavaViewServer extends ViewServer {
 	}
 
 	public String prompt(OtpErlangList data) {
-
+		if (data == null) return null;
 		try {
-			if (data.arity() == 0)
-				throw new JSONException("Empty JSON array");
+			if (data.arity() == 0) throw new JSONException("Empty JSON array");
 			String event = ErlangJson.binstr(data,0);
 			//Log("prompt '" + event + "'");
 			Command c = Command.getCommandFromString(event);
@@ -57,7 +55,8 @@ public class JavaViewServer extends ViewServer {
 			}
 			switch (c) {
 			case RESET:
-//				views.clear();
+				views.clear();
+//				classUrls.clear();
 				return "true";
 			case ADD_LIBRARY:
 				String urlString = ErlangJson.binstr(data, 1);
@@ -96,6 +95,7 @@ public class JavaViewServer extends ViewServer {
 				for (JavaView view : views) {
 					ret.put(view.MapDoc(jsondoc));
 				}
+//				Log(ret.toString());
 				return ret.toString();
 			case REDUCE:
 				try {
@@ -112,6 +112,10 @@ public class JavaViewServer extends ViewServer {
 					final JSONArray mapresults = ErlangJson.arr(data,2);
 					// Log(mapresults.toString());
 					for (JavaView view : reduceViews) {
+						if (view == null) {
+							reduceOut.put(JSONObject.NULL);
+							continue;
+						}
 						JSONArray thisResult = view.Reduce(mapresults);
 						if (thisResult != null && thisResult.length() > 0) {
 							reduceOut.put(thisResult.get(0));
@@ -140,6 +144,10 @@ public class JavaViewServer extends ViewServer {
 					}
 					final JSONArray mapresults = ErlangJson.arr(data,2);
 					for (JavaView view : rereduceViews) {
+						if (view == null) {
+							rereduceOut.put(JSONObject.NULL);
+							continue;
+						}
 						JSONArray thisResult = view.ReReduce(mapresults);
 						if (thisResult != null && thisResult.length() > 0) {
 							rereduceOut.put(thisResult.get(0));
@@ -170,8 +178,9 @@ public class JavaViewServer extends ViewServer {
 	 */
 	
 	private String error(Exception e) {
+		if (e == null) return null;
 		e.printStackTrace();
-		return error(e);
+		return e.toString();
 	}
 
 	// logger
@@ -185,12 +194,22 @@ public class JavaViewServer extends ViewServer {
 
 	// load jar's view class
     @SuppressWarnings("unchecked")
-	private JavaView getClass(String classname, List<URL> libs)
-			throws Exception {
-		URLClassLoader loader = new URLClassLoader(libs.toArray(new URL[0]));
-		Class<JavaView> cl = (Class<JavaView>) loader.loadClass(classname);
-		Object o = cl.newInstance();
-		return (JavaView) o;
+	private JavaView getClass(String classname, List<URL> libs) {
+    	if (libs == null || libs.size() == 0) {
+    		Log("Empty URL array for " + classname);
+    		return null;
+    	}
+    	try {
+//    		Log("length of array: " + String.valueOf(libs.size()));
+    		URLClassLoader loader = new URLClassLoader(libs.toArray(new URL[0]));
+    		Class<JavaView> cl = (Class<JavaView>) loader.loadClass(classname);
+    		Object o = cl.newInstance();
+    		return (JavaView) o;
+    	} catch (Exception e) {
+    		Log(e.getMessage());
+//    		System.exit(0);
+    	}
+    	return null;
 	}
 
 }
