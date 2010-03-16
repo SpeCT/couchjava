@@ -9,6 +9,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import com.cloudant.couchdbjavaserver.*;
+import com.cloudant.index.CouchIndexUtils;
+
 import org.apache.lucene.analysis.standard.*;
 import org.apache.lucene.analysis.*;
 import org.apache.lucene.util.*;
@@ -39,10 +41,22 @@ public class LuceneDoc implements JavaView {
 			// Document d = new Document();
 			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
 			MemoryIndex index = new MemoryIndex();
-			for (String field : fieldsToStore.keySet()) {
-				String text = findFieldString(field, doc);
-				if (field != null && text != null) {
-					index.addField(field, text, analyzer, fieldsToStore.get(field));
+			// user specified field set
+			if (fieldsToStore != null) {
+				for (String field : fieldsToStore.keySet()) {
+					String text = findFieldString(field, doc);
+					if (field != null && text != null) {
+						index.addField(field, text, analyzer, fieldsToStore.get(field));
+					}
+				}
+			} else {
+				//index everything 
+				Map<String, String> mapped = CouchIndexUtils.MapJSONObject(doc, null);
+				for (String field : mapped.keySet()) {
+					String text = mapped.get(field);
+					if (field != null && text != null) {
+						index.addField(field, text, analyzer, 1.0f);
+					}
 				}
 			}
 			out = index.jsonMap();
