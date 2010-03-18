@@ -58,8 +58,10 @@ public class CouchIndexUtils {
 		String termText = term.text();
 		String field = term.field();
 		boolean all = field.equals("*");
-		String url = baseUrl + indexUrl + "?key=" + termText;
+		String url = baseUrl + indexUrl + "?key=\"" + termText + "\"";
 		JSONObject jobj = GetJSONDocument(user, pass, url);
+//System.out.println("Url: " + url);
+//System.out.println("results: " + jobj.toString());
 		JSONArray outArray = new JSONArray();
 		try {
 			JSONArray rows = jobj.getJSONArray("rows");
@@ -67,12 +69,15 @@ public class CouchIndexUtils {
 			for (int irow = 0; irow < rows.length(); irow++) {
 				JSONObject row = rows.getJSONObject(irow);
 				try {
+					String id = row.getString("id");
 					JSONArray values = row.getJSONArray("value");
-					if (values != null && values.length() > 0) {
+//			System.out.println("values: " + values.toString());
+					if (values != null) {
 						for (int i=0;i<values.length();i++) {
-							final JSONObject value = values.getJSONObject(i);
-							if (all || value.getString("field").equals(field)) {
-								outArray.put(value);
+							JSONObject v = values.getJSONObject(i);
+							if (all || v.getString("field").equals(field)) {
+								v.put("_id", id);
+								outArray.put(v);
 							}
 						}
 					}
