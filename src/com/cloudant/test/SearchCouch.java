@@ -71,18 +71,18 @@ public class SearchCouch {
     String usage =
       "Usage:\tjava com.cloudant.test.SearchCounch -indexurl i [-user u] [-password p] [-field f] [-repeat n] [-queries file] [-raw] [-norms field] [-paging hitsPerPage]";
     usage += "\n\tSpecify 'false' for hitsPerPage to use streaming instead of paging search.";
-    if (args.length > 0 && ("-h".equals(args[0]) || "-help".equals(args[0]))) {
+    if (args.length == 0 || (args.length > 0 && ("-h".equals(args[0]) || "-help".equals(args[0])))) {
       System.out.println(usage);
       System.exit(0);
     }
 
-    String index = "index";
-    String field = "contents";
+    String index = null;
+    String field = "text";
     String user = null;
     String password = null;
     String queries = null;
     int repeat = 0;
-    boolean raw = false;
+    boolean raw = true;
     String normsField = null;
     boolean paging = true;
     int hitsPerPage = 10;
@@ -122,6 +122,9 @@ public class SearchCouch {
         }
         i++;
       }
+    }
+    if (index == null) {
+    	System.out.println("must give url of indexed database to search");
     }
     
 //    IndexReader reader = IndexReader.open(FSDirectory.open(new File(index)), true); // only searching, so read-only=true
@@ -228,6 +231,7 @@ public class SearchCouch {
                                      int hitsPerPage, boolean raw, boolean interactive) throws IOException {
  
     // Collect enough docs to show 5 pages
+      long starttime = System.currentTimeMillis();
     TopScoreDocCollector collector = TopScoreDocCollector.create(
         5 * hitsPerPage, false);
     searcher.search(query, collector);
@@ -253,6 +257,7 @@ public class SearchCouch {
         hits = collector.topDocs().scoreDocs;
       }
       
+      long time = System.currentTimeMillis() - starttime;
       end = Math.min(hits.length, start + hitsPerPage);
       
       for (int i = start; i < end; i++) {
@@ -276,7 +281,8 @@ public class SearchCouch {
         }
                   
       }
-
+      System.out.println("Search for '" + query.toString() + "' took " + time + " millis");
+      
       if (!interactive) {
         break;
       }

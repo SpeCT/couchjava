@@ -6,7 +6,8 @@
   <property file="build.properties"/>
   <property name="project.home" value="."/>
   <property name="jar.name.server" value="couchdb-java-viewserver.jar"/>
-  <property name="jar.name.views" value="javaviews.jar"/>
+  <property name="jar.name.views" value="javaviews.jar"/>  
+  <property name="jar.name.search" value="searchcouch.jar"/>
 
   <!-- internal properties -->
   <property name="src.dir" value="${project.home}/src"/>
@@ -80,7 +81,26 @@
     </jar>
   </target>
 
-  <target name="jars" depends="server.jar, views.jar"/>
+  <target name="search.jar" depends="compile">
+    <mkdir dir="${dist.dir}"/>
+    <jar destfile="${dist.dir}/${jar.name.search}"
+         filesetmanifest="mergewithoutmain">
+      <manifest>
+        <attribute name="Main-Class"
+                   value="com.cloudant.test.SearchCouch"/>
+        <attribute name="Class-Path" value="."/>
+      </manifest>
+      <fileset dir="${project.home}/bin" excludes="**/javaviews/"/>
+      <fileset dir="${project.home}/bin" excludes="**/ejje/"/>
+      <fileset dir="${project.home}/bin" excludes="**/couchdbjavaserver/"/>
+      <zipfileset excludes="META-INF/*.SF"
+                  src="${lib.dir}/org.json.jar"/>
+      <zipfileset excludes="META-INF/*.SF"
+                  src="${lib.dir}/lucene-core-3.1-dev.jar"/>
+    </jar>
+  </target>
+
+  <target name="jars" depends="server.jar, views.jar, search.jar"/>
 
     <target name="javadoc">
      <mkdir  dir="${project.home}/docs"/>

@@ -58,7 +58,7 @@ public class CouchIndexUtils {
 		String termText = term.text();
 		String field = term.field();
 		boolean all = field.equals("*");
-		String url = baseUrl + indexUrl + "?key=\"" + termText + "\"";
+		String url = baseUrl + indexUrl + "?stale=ok&key=\"" + termText + "\"";
 		JSONObject jobj = GetJSONDocument(user, pass, url);
 //System.out.println("Url: " + url);
 //System.out.println("results: " + jobj.toString());

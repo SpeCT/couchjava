@@ -35,7 +35,7 @@ public class CouchdbIndexReader extends IndexReader {
 	private String password;
 	private String indexPath = "_design/lucene/_view/index";
 	private DocIdMap dmap;
-	static boolean DEBUG = true;
+	static boolean DEBUG = false;
 	private Map<Term, Map<Integer, List<Integer>>> data = null;
 	
 	public static IndexReader open(String url) {
@@ -110,7 +110,7 @@ public class CouchdbIndexReader extends IndexReader {
 		try {
 //			System.out.println("lucene id: " + arg0);
 			String couchId = getCouchId(arg0);
-			System.out.println("Get Doc Couch Id: " + couchId + " lucene id: " + arg0);
+//			System.out.println("Get Doc Couch Id: " + couchId + " lucene id: " + arg0);
 			JSONObject jdoc = CouchIndexUtils.GetJSONDocument(user,password,databaseUrl+couchId);
 			if (jdoc == null) return null;
 			Document doc = new Document();
@@ -224,7 +224,7 @@ public class CouchdbIndexReader extends IndexReader {
         private int cursor = 0;
 //        private ArrayIntList current;
         private List<DocPositions> current;
-        private int iPos;
+        private int iPos = 0;
         private Term term;
         
         public void seek(Term term) {
@@ -237,14 +237,14 @@ public class CouchdbIndexReader extends IndexReader {
         		  // cached
         	  } else { 
         		  JSONArray arr = CouchIndexUtils.GetTermData(user, password, databaseUrl, indexPath, term);        	  
-        		  System.out.println("Term Data for " + term.toString() + " " + arr.toString());
+//        		  System.out.println("Term Data for " + term.toString() + " " + arr.toString());
         		  
         		  if (arr != null) {
         			  Map<Integer, List<Integer>> tmap = new HashMap<Integer, List<Integer>>();
         			  for (int i = 0; i < arr.length(); i ++) {
         				  try {
         				  JSONObject jobj = arr.getJSONObject(i);
-        				  System.out.println(jobj.toString());
+//        				  System.out.println(jobj.toString());
         				  String docId = jobj.getString("_id");
         				  int luceneId = dmap.getLuceneId(docId);
         				  JSONArray pos = jobj.getJSONArray("position");
@@ -253,7 +253,7 @@ public class CouchdbIndexReader extends IndexReader {
 // format screwy
         					  positions.add(pos.getInt(iPos));
         				  }
-         				  System.out.println("couch " + docId + " lucene " + luceneId);
+//         				  System.out.println("couch " + docId + " lucene " + luceneId);
         				  tmap.put(luceneId, positions);
         				  } catch (JSONException je) {
         					  System.out.println(je.toString());
@@ -270,6 +270,7 @@ public class CouchdbIndexReader extends IndexReader {
     		  	}
     		  	hasNext = (current.size() > 0);
     		  	cursor = 0;
+    		  	iPos = 0;
           	}
         }
   
@@ -280,14 +281,14 @@ public class CouchdbIndexReader extends IndexReader {
   
         public int doc() {
           if (DEBUG) System.err.println(".doc");
-          int returnValue = current.get(cursor).id;
-          System.out.println(cursor + " " + returnValue);
+//          int returnValue = current.get(cursor).id;
+//          System.out.println(cursor + " " + returnValue);
           return current.get(cursor).id;
         }
   
         public int freq() {
           int freq = current.get(cursor).positions.size();
-          if (DEBUG) System.err.println(".freq: " + freq);
+//          if (DEBUG) System.err.println(".freq: " + freq);
           return freq;
         }
   
@@ -327,6 +328,7 @@ public class CouchdbIndexReader extends IndexReader {
         	}
         	final int pos = current.get(cursor).positions.get(iPos);
         	iPos++;
+        	System.out.println(term + " in position " + pos);
         	return pos;
         }
         
@@ -407,80 +409,6 @@ public class CouchdbIndexReader extends IndexReader {
 		
 		
 	}
-	  private static final class ArrayIntList implements Serializable {
-
-		    private int[] elements;
-		    private int size = 0;
-		    
-		    private static final long serialVersionUID = 2282195016849084649L;  
-		      
-		    public ArrayIntList() {
-		      this(10);
-		    }
-
-		    public ArrayIntList(int initialCapacity) {
-		      elements = new int[initialCapacity];
-		    }
-
-		    public void add(int elem) {
-		      if (size == elements.length) ensureCapacity(size + 1);
-		      elements[size++] = elem;
-		    }
-
-		    public void add(int pos, int start, int end) {
-		      if (size + 3 > elements.length) ensureCapacity(size + 3);
-		      elements[size] = pos;
-		      elements[size+1] = start;
-		      elements[size+2] = end;
-		      size += 3;
-		    }
-
-		    public int get(int index) {
-		      if (index >= size) throwIndex(index);
-		      return elements[index];
-		    }
-		    
-		    public int size() {
-		      return size;
-		    }
-		    
-		    public int[] toArray(int stride) {
-		      int[] arr = new int[size() / stride];
-		      if (stride == 1) {
-		        System.arraycopy(elements, 0, arr, 0, size); // fast path
-		      } else { 
-		        for (int i=0, j=0; j < size; i++, j += stride) arr[i] = elements[j];
-		      }
-		      return arr;
-		    }
-		    
-		    private void ensureCapacity(int minCapacity) {
-		      int newCapacity = Math.max(minCapacity, (elements.length * 3) / 2 + 1);
-		      int[] newElements = new int[newCapacity];
-		      System.arraycopy(elements, 0, newElements, 0, size);
-		      elements = newElements;
-		    }
-
-		    private void throwIndex(int index) {
-		      throw new IndexOutOfBoundsException("index: " + index
-		            + ", size: " + size);
-		    }
-		    
-		    /** returns the first few positions (without offsets); debug only */
-		    public String toString(int stride) {
-		      int s = size() / stride;
-		      int len = Math.min(10, s); // avoid printing huge lists
-		      StringBuilder buf = new StringBuilder(4*len);
-		      buf.append("[");
-		      for (int i = 0; i < len; i++) {
-		        buf.append(get(i*stride));
-		        if (i < len-1) buf.append(", ");
-		      }
-		      if (len != s) buf.append(", ..."); // and some more...
-		      buf.append("]");
-		      return buf.toString();
-		    }   
-		  }
 	  private class DocPositions {
 		  public int id;
 		  public List<Integer> positions;
