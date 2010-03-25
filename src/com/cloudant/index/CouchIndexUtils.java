@@ -57,11 +57,16 @@ public class CouchIndexUtils {
 	public static JSONArray GetTermData(String user, String pass, String baseUrl, String indexUrl, Term term) {
 		String termText = term.text();
 		String field = term.field();
+		JSONArray termKey = new JSONArray().put(termText).put(field);
 		boolean all = field.equals("*");
-		String url = baseUrl + indexUrl + "?stale=ok&key=\"" + termText + "\"";
+//		String url = baseUrl + indexUrl + "?stale=ok&key=\"" + termText + "\"";
+		String url = baseUrl + indexUrl + "?stale=ok&key=" + termKey.toString();
+		if (all) {
+			url = baseUrl + indexUrl + "?stale=ok&startkey=[\"" + termText + "\"]&endkey=[\"" + termText + "\",{}]&inclusive_end=true";
+		}
 		JSONObject jobj = GetJSONDocument(user, pass, url);
-//System.out.println("Url: " + url);
-//System.out.println("results: " + jobj.toString());
+		//System.err.println("Url: " + url);
+		//System.err.println("results: " + jobj.toString());
 		JSONArray outArray = new JSONArray();
 		try {
 			JSONArray rows = jobj.getJSONArray("rows");
@@ -75,10 +80,10 @@ public class CouchIndexUtils {
 					if (values != null) {
 						for (int i=0;i<values.length();i++) {
 							JSONObject v = values.getJSONObject(i);
-							if (all || v.getString("field").equals(field)) {
+//							if (all || v.getString("field").equals(field)) {
 								v.put("_id", id);
 								outArray.put(v);
-							}
+//							}
 						}
 					}
 				} catch (JSONException je) {

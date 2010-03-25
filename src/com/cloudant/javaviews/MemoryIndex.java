@@ -657,8 +657,8 @@ public class MemoryIndex implements Serializable {
   		}
   		for (String term : mout.keySet()) {
   			Map<String,List<Integer>> fields = mout.get(term);
-  			JSONArray tout = new JSONArray();
   			for (String field : fields.keySet()) {
+  	  			JSONArray tout = new JSONArray();
   				List<Integer> positions = fields.get(field);
 //  				JSONArray posArray = new JSONArray();
 //  				Iterator<Integer> iter = positions.iterator();
@@ -668,15 +668,15 @@ public class MemoryIndex implements Serializable {
   				try {
   					float boost = ((Info)this.fields.get(field)).getBoost();
   					if (boost == 1.0f) {
-  						tout.put(new JSONObject().put("field", field).put("position", positions));
+  						tout.put(new JSONObject().put("p", positions));
   					} else {
- 						tout.put(new JSONObject().put("field", field).put("position", positions).put("boost", boost));  						
+ 						tout.put(new JSONObject().put("p", positions).put("b", boost));  						
   					}
 				} catch (JSONException e) {
 					// TODO Auto-generated catch block
 				} 
+	  			jout.put(new JSONArray().put((new JSONArray()).put(term).put(field)).put(tout));
   			}
-  			jout.put(new JSONArray().put(term).put(tout));
   		}
   		return jout;
   	}

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,20 +64,20 @@ public class CouchdbIndexReader extends IndexReader {
 	@Override
 	protected void doClose() throws IOException {
 		// TODO Auto-generated method stub
-		System.out.println("doClose");
+		if (DEBUG) System.err.println("doClose");
 	}
 
 	@Override
 	protected void doCommit(Map<String, String> arg0) throws IOException {
 		// TODO Auto-generated method stub
-		System.out.println("doCommit");
+		if (DEBUG) System.err.println("doCommit");
 
 	}
 
 	@Override
 	protected void doDelete(int arg0) throws CorruptIndexException, IOException {
 		// TODO Auto-generated method stub
-		System.out.println("doDelete");
+		if (DEBUG) System.err.println("doDelete");
 
 	}
 
@@ -84,21 +85,21 @@ public class CouchdbIndexReader extends IndexReader {
 	protected void doSetNorm(int arg0, String arg1, byte arg2)
 			throws CorruptIndexException, IOException {
 		// TODO Auto-generated method stub
-		System.out.println("doSetNorm");
+		if (DEBUG) System.err.println("doSetNorm");
 
 	}
 
 	@Override
 	protected void doUndeleteAll() throws CorruptIndexException, IOException {
 		// TODO Auto-generated method stub
-		System.out.println("doUndeleteAll");
+		if (DEBUG) System.err.println("doUndeleteAll");
 
 	}
 
 	@Override
 	public int docFreq(Term arg0) throws IOException {
 		// This is only true for non wild card terms. Fix for wild card.
-		System.out.println("docFreq");
+		if (DEBUG) System.err.println("docFreq");
 		JSONArray arr = CouchIndexUtils.GetTermData(user, password, databaseUrl, indexPath, arg0);
 		return arr.length();
 	}
@@ -108,9 +109,9 @@ public class CouchdbIndexReader extends IndexReader {
 			throws CorruptIndexException, IOException {
 		// TODO Auto-generated method stub
 		try {
-//			System.out.println("lucene id: " + arg0);
+//			if (DEBUG) System.err.println("lucene id: " + arg0);
 			String couchId = getCouchId(arg0);
-//			System.out.println("Get Doc Couch Id: " + couchId + " lucene id: " + arg0);
+//			if (DEBUG) System.err.println("Get Doc Couch Id: " + couchId + " lucene id: " + arg0);
 			JSONObject jdoc = CouchIndexUtils.GetJSONDocument(user,password,databaseUrl+couchId);
 			if (jdoc == null) return null;
 			Document doc = new Document();
@@ -129,7 +130,7 @@ public class CouchdbIndexReader extends IndexReader {
 	@Override
 	public Collection<String> getFieldNames(FieldOption arg0) {
 		// TODO Auto-generated method stub
-		System.out.println("getFieldNames");
+		if (DEBUG) System.err.println("getFieldNames");
 		return null;
 	}
 
@@ -137,14 +138,14 @@ public class CouchdbIndexReader extends IndexReader {
 	public TermFreqVector getTermFreqVector(int arg0, String arg1)
 			throws IOException {
 		// TODO Auto-generated method stub
-		System.out.println("TermFreqVector1");
+		if (DEBUG) System.err.println("TermFreqVector1");
 		return null;
 	}
 
 	@Override
 	public void getTermFreqVector(int arg0, TermVectorMapper arg1)
 			throws IOException {
-		System.out.println("TermFreqVector2");
+		if (DEBUG) System.err.println("TermFreqVector2");
 		// TODO Auto-generated method stub
 
 	}
@@ -152,7 +153,7 @@ public class CouchdbIndexReader extends IndexReader {
 	@Override
 	public void getTermFreqVector(int arg0, String arg1, TermVectorMapper arg2)
 			throws IOException {
-		System.out.println("TermFreqVector3");
+		if (DEBUG) System.err.println("TermFreqVector3");
 		// TODO Auto-generated method stub
 
 	}
@@ -160,28 +161,28 @@ public class CouchdbIndexReader extends IndexReader {
 	@Override
 	public TermFreqVector[] getTermFreqVectors(int arg0) throws IOException {
 		// TODO Auto-generated method stub
-		System.out.println("TermFreqVector4");
+		if (DEBUG) System.err.println("TermFreqVector4");
 		return null;
 	}
 
 	@Override
 	public boolean hasDeletions() {
 		// TODO Auto-generated method stub
-		System.out.println("hasDeletions");
+		if (DEBUG) System.err.println("hasDeletions");
 		return false;
 	}
 
 	@Override
 	public boolean isDeleted(int arg0) {
 		// TODO Auto-generated method stub
-		System.out.println("isDeleted");
+		if (DEBUG) System.err.println("isDeleted");
 		return false;
 	}
 
 	@Override
 	public int maxDoc() {
 		// TODO Auto-generated method stub
-//		System.out.println("maxDoc: " + dmap.maxDoc());
+//		if (DEBUG) System.err.println("maxDoc: " + dmap.maxDoc());
 //		return dmap.maxDoc();
 		return numDocs();
 	}
@@ -189,14 +190,14 @@ public class CouchdbIndexReader extends IndexReader {
 	@Override
 	public byte[] norms(String arg0) throws IOException {
 		// TODO Auto-generated method stub
-		System.out.println("norms");
+		if (DEBUG) System.err.println("norms");
 		return null;
 	}
 
 	@Override
 	public void norms(String arg0, byte[] arg1, int arg2) throws IOException {
 		// TODO Auto-generated method stub
-		System.out.println("norms2");
+		if (DEBUG) System.err.println("norms2");
 
 	}
 
@@ -206,7 +207,9 @@ public class CouchdbIndexReader extends IndexReader {
 		String summary = CouchIndexUtils.GetDocument(user, password, databaseUrl);
 		JSONObject jobj = CouchIndexUtils.ConvertStringToJSON(summary);
 		try {
-			return jobj.getInt("doc_count");
+			final int num = jobj.getInt("doc_count");
+			if (DEBUG) System.err.println("numDocs: " + num);
+			return num;
 		} catch (JSONException e) {
 			System.out.println("Error getting doc_count");
 			return 0;
@@ -220,7 +223,7 @@ public class CouchdbIndexReader extends IndexReader {
       
       return new TermPositions() {
   
-        private boolean hasNext;
+//        private boolean hasNext;
         private int cursor = 0;
 //        private ArrayIntList current;
         private List<DocPositions> current;
@@ -230,9 +233,6 @@ public class CouchdbIndexReader extends IndexReader {
         public void seek(Term term) {
           this.term = term;
           if (DEBUG) System.err.println(".seek: " + term);
-          if (term == null) {
-            hasNext = true;  // term==null means match all docs
-          } else {
         	  if (cache && data != null && data.containsKey(term)) {
         		  // cached
         	  } else { 
@@ -247,7 +247,7 @@ public class CouchdbIndexReader extends IndexReader {
 //        				  System.out.println(jobj.toString());
         				  String docId = jobj.getString("_id");
         				  int luceneId = dmap.getLuceneId(docId);
-        				  JSONArray pos = jobj.getJSONArray("position");
+        				  JSONArray pos = jobj.getJSONArray("p");
         				  List<Integer> positions = new ArrayList<Integer>();
         				  for (int iPos=0; iPos < pos.length(); iPos++) {
 // format screwy
@@ -263,16 +263,18 @@ public class CouchdbIndexReader extends IndexReader {
         			  data.put(term, tmap);
         		  }
         	  }
-    		  	Map<Integer, List<Integer>> thisTerm = data.get(term);
-    		  	current = new ArrayList<DocPositions>();
-    		  	for (Integer i : thisTerm.keySet()) {
+    		  Map<Integer, List<Integer>> thisTerm = data.get(term);
+    		  current = new ArrayList<DocPositions>();
+    		  for (Integer i : thisTerm.keySet()) {
     			  current.add(new DocPositions(i,thisTerm.get(i)));
-    		  	}
-    		  	hasNext = (current.size() > 0);
-    		  	cursor = 0;
-    		  	iPos = 0;
-          	}
-        }
+    		  }
+    		  // WARNING must be sorted.  current should probably be some sort of automatically sorted list.
+    		  Collections.sort(current);
+              if (DEBUG) System.err.println(".seek: size of doc list " + current.size());
+//    		  hasNext = (current.size() > 0);
+    		  cursor = -1;
+    		  iPos = 0;
+      	}
   
         public void seek(TermEnum termEnum) {
           if (DEBUG) System.err.println(".seekEnum");
@@ -280,37 +282,42 @@ public class CouchdbIndexReader extends IndexReader {
         }
   
         public int doc() {
-          if (DEBUG) System.err.println(".doc");
-//          int returnValue = current.get(cursor).id;
-//          System.out.println(cursor + " " + returnValue);
+//          if (DEBUG) System.err.println(".doc");
+          int returnValue = current.get(cursor).id;
+          if (DEBUG) System.err.println(".doc " + cursor + " " + returnValue + " " + term);
           return current.get(cursor).id;
         }
   
         public int freq() {
           int freq = current.get(cursor).positions.size();
-//          if (DEBUG) System.err.println(".freq: " + freq);
+          int id = current.get(cursor).id;
+          if (DEBUG) System.err.println(".id: " + id +  " freq: " + freq);
           return freq;
         }
   
         public boolean next() {
+            if (DEBUG) System.err.println(".next " + term);
         	iPos = 0;
             cursor++;
-            hasNext = cursor + 1 < current.size();
+//            hasNext = cursor < current.size();
             return cursor < current.size();
          }
   
         public int read(int[] docs, int[] freqs) {
+            if (DEBUG) System.err.println(".read");
           int iRead = 0;
+          boolean hasNext = next();
           while (hasNext && iRead < docs.length) {
         	  docs[iRead] = doc();
         	  freqs[iRead] = freq();
         	  iRead++;
-        	  next();
+        	  hasNext = next();
           }
           return iRead;
         }
   
         public boolean skipTo(int target) {
+            if (DEBUG) System.err.println(".skipTo " + target + " for " + term);
             do {
               if (!next())
                     return false;
@@ -323,12 +330,13 @@ public class CouchdbIndexReader extends IndexReader {
         }
         
         public int nextPosition() { // implements TermPositions
+            if (DEBUG) System.err.println(".nextPosition");
         	if (iPos >= freq()) {
         		throw new ArrayIndexOutOfBoundsException();
         	}
         	final int pos = current.get(cursor).positions.get(iPos);
         	iPos++;
-        	System.out.println(term + " in position " + pos);
+        	if (DEBUG) System.err.println(term + " in position " + pos);
         	return pos;
         }
         
@@ -337,6 +345,8 @@ public class CouchdbIndexReader extends IndexReader {
          * @throws UnsupportedOperationException
          */
         public int getPayloadLength() {
+            if (DEBUG) System.err.println(".getPayloadLength");
+          
           throw new UnsupportedOperationException();
         }
          
@@ -345,11 +355,14 @@ public class CouchdbIndexReader extends IndexReader {
          * @throws UnsupportedOperationException
          */
         public byte[] getPayload(byte[] data, int offset) throws IOException {
+            if (DEBUG) System.err.println(".getPayload");
           throw new UnsupportedOperationException();
         }
 
         public boolean isPayloadAvailable() {
           // unsuported
+            if (DEBUG) System.err.println(".isPayloadAvailable");
+
           return false;
         }
 
@@ -358,17 +371,21 @@ public class CouchdbIndexReader extends IndexReader {
   
     @Override
     public TermDocs termDocs() {
-      return termPositions();
+        if (DEBUG) System.err.println(".termDocs");
+     return termPositions();
     }
 
 	@Override
 	public TermEnum terms() throws IOException {
 		// TODO Auto-generated method stub
+        if (DEBUG) System.err.println(".terms");
+
 		return null;
 	}
 
 	@Override
 	public TermEnum terms(Term arg0) throws IOException {
+        if (DEBUG) System.err.println(".terms2");
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -409,13 +426,16 @@ public class CouchdbIndexReader extends IndexReader {
 		
 		
 	}
-	  private class DocPositions {
+	  private class DocPositions implements Comparable {
 		  public int id;
 		  public List<Integer> positions;
 		  public DocPositions(int id, List<Integer> positions) {
 			  this.id = id;
 			  this.positions = positions;
 		  }
+		public int compareTo(Object arg0) {
+			return id - ((DocPositions)arg0).id;
+		}
 	  }
 
 }

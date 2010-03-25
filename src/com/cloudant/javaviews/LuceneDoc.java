@@ -98,9 +98,9 @@ public class LuceneDoc implements JavaView {
 //							uniques.add(fields.getString(k));
 //						}
 //					} else {
-					Iterator<String> iter = (Iterator<String>)jobj.keys();
+					Iterator<JSONArray> iter = (Iterator<JSONArray>)jobj.keys();
 					while (iter.hasNext()) {
-						String key = iter.next();
+						String key = (iter.next()).toString();
 						if (wordCount.containsKey(key)) {
 							wordCount.put(key, wordCount.get(key).put(jobj.getJSONArray(key)));
 						} else {
