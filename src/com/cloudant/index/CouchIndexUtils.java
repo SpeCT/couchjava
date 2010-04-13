@@ -26,6 +26,28 @@ public class CouchIndexUtils {
 		}
 	}
 	
+	public static String findFieldString(String keyToFind, JSONObject obj) {
+		if (obj.has(keyToFind)) {
+			try {
+				return obj.getString(keyToFind);
+			} catch (JSONException je){
+//				Log("Field " + keyToFind + " is not a string");
+				return null;
+			}
+		}
+		Iterator<String> keys = (Iterator<String>)obj.keys();
+		while (keys.hasNext()) {
+			String key = keys.next();
+			try {
+				JSONObject jo = obj.getJSONObject(key);
+				String out = findFieldString(keyToFind, jo);
+				if (out != null) return out;
+			} catch (JSONException je) {
+				/* key not a JSONObject */
+			}
+		}
+		return null;
+	}
 	public static Map<String, String> MapJSONObject(JSONObject jobj, String prefix) {
 		if (jobj == null) return null;
 		Iterator<String> keys = (Iterator<String>)jobj.keys();
@@ -65,8 +87,8 @@ public class CouchIndexUtils {
 			url = baseUrl + indexUrl + "?stale=ok&startkey=[\"" + termText + "\"]&endkey=[\"" + termText + "\",{}]&inclusive_end=true";
 		}
 		JSONObject jobj = GetJSONDocument(user, pass, url);
-		//System.err.println("Url: " + url);
-		//System.err.println("results: " + jobj.toString());
+//		System.err.println("Url: " + url);
+//		System.err.println("results: " + jobj.toString());
 		JSONArray outArray = new JSONArray();
 		try {
 			JSONArray rows = jobj.getJSONArray("rows");
@@ -95,8 +117,41 @@ public class CouchIndexUtils {
 		}
 		return outArray;
 	}
+	public static JSONArray GetSortData(String user, String pass, String baseUrl, String indexUrl, String field) {
+//		String url = baseUrl + indexUrl + "?stale=ok&key=\"" + termText + "\"";
+		String url = baseUrl + indexUrl + field + "?stale=ok&group=true";
+		JSONObject jobj = GetJSONDocument(user, pass, url);
+		System.err.println("Url: " + url);
+		System.err.println("results: " + jobj.toString());
+		JSONArray outArray = new JSONArray();
+		try {
+			JSONArray rows = jobj.getJSONArray("rows");
+			if (rows == null || rows.length()==0) return outArray;
+			for (int irow = 0; irow < rows.length(); irow++) {
+				JSONObject row = rows.getJSONObject(irow);
+				try {
+					JSONArray values = row.getJSONArray("value");
+//			System.out.println("values: " + values.toString());
+					if (values != null) {
+						for (int i=0;i<values.length();i++) {
+							JSONObject v = values.getJSONObject(i);
+//							if (all || v.getString("field").equals(field)) {
+								outArray.put(v);
+//							}
+						}
+					}
+				} catch (JSONException je) {
+					/* no values in this row */
+				}
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());			
+		}
+		return outArray;
+	}
 	
 	public static JSONObject GetJSONDocument(String user, String pass, String url) {
+//		System.err.println("Getting " + url);
 		return ConvertStringToJSON(GetDocument(user,pass,url));
 	}
 	

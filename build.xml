@@ -8,17 +8,28 @@
   <property name="jar.name.server" value="couchdb-java-viewserver.jar"/>
   <property name="jar.name.views" value="javaviews.jar"/>  
   <property name="jar.name.search" value="searchcouch.jar"/>
+  <property name="war.name.searchapp" value="searchserver.war"/>
 
   <!-- internal properties -->
   <property name="src.dir" value="${project.home}/src"/>
   <property name="bin.dir" value="${project.home}/bin"/>
   <property name="lib.dir" value="${project.home}/lib"/>
   <property name="dist.dir" value="${project.home}/dist"/>
+  <property name="web.dir" value="${project.home}/WebContent"/>
+
+  <!-- get system variables -->
+  <property environment="env"/>
 
   <!-- build path -->
   <path id="build.path">
     <pathelement path="${classpath}"/>
     <fileset dir="${lib.dir}">
+      <include name="**/*.jar"/>
+    </fileset>
+    <fileset dir="${web.dir}/WEB-INF/lib">
+      <include name="**/*.jar"/>
+    </fileset>
+    <fileset dir="${env.CATALINA_HOME}/lib">
       <include name="**/*.jar"/>
     </fileset>
   </path>
@@ -98,6 +109,20 @@
       <zipfileset excludes="META-INF/*.SF"
                   src="${lib.dir}/lucene-core-3.1-dev.jar"/>
     </jar>
+  </target>
+
+  <target name="searchserver" depends="server.jar">
+     <war destfile="${dist.dir}/${war.name.searchapp}" webxml="${web.dir}/WEB-INF/web.xml">
+     <fileset dir="${web.dir}"/>
+     <lib dir="${web.dir}/WEB-INF/lib"/>
+     <classes dir="${bin.dir}"/>
+     </war>
+  </target>
+
+  <target name="deploy-local" depends="searchserver">
+  <copy todir="${env.CATALINA_HOME}/webapps/">
+   <fileset file="${dist.dir}/${war.name.searchapp}" />
+  </copy>
   </target>
 
   <target name="jars" depends="server.jar, views.jar, search.jar"/>

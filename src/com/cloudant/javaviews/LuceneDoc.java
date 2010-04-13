@@ -20,7 +20,12 @@ public class LuceneDoc implements JavaView {
 	private Map<String, Float> fieldsToStore = null;
 	
 	private int reduceCount = 0;
+	
 
+	public Analyzer getAnalyzer() {
+		return new StandardAnalyzer(Version.LUCENE_CURRENT);
+	}
+	
 	public void Log(String message) {
 		JSONArray out = new JSONArray();
 		out.put("log");
@@ -39,7 +44,7 @@ public class LuceneDoc implements JavaView {
 			// StandardAnalyzer(Version.LUCENE_CURRENT),
 			// IndexWriter.MaxFieldLength.UNLIMITED);
 			// Document d = new Document();
-			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
+			Analyzer analyzer = getAnalyzer();
 			MemoryIndex index = new MemoryIndex();
 			// user specified field set
 			if (fieldsToStore != null) {

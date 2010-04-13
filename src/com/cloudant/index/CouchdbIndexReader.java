@@ -1,15 +1,21 @@
 package com.cloudant.index;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldSelector;
@@ -26,6 +32,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.cloudant.couchdbjavaserver.JavaView;
+import com.cloudant.javaviews.LuceneDoc;
+
 
 
 public class CouchdbIndexReader extends IndexReader {
@@ -35,20 +44,27 @@ public class CouchdbIndexReader extends IndexReader {
 	private String user;
 	private String password;
 	private String indexPath = "_design/lucene/_view/index";
+	private String fieldPath = "_design/fields/_view/";
 	private DocIdMap dmap;
 	static boolean DEBUG = false;
 	private Map<Term, Map<Integer, List<Integer>>> data = null;
 	
-	public static IndexReader open(String url) {
+	public static IndexReader open(String url) throws IOException {
 		return new CouchdbIndexReader(url, null, null);
 	}
 
-	public static IndexReader open(String url, String user, String password) {
+	public static IndexReader open(String url, String user, String password) throws IOException {
 		return new CouchdbIndexReader(url, user, password);
 	}
 	
-	public CouchdbIndexReader(String url, String user, String password) {
-		databaseUrl = url;
+	public CouchdbIndexReader(String url, String user, String password) throws IOException {
+		if (url == null) throw new IOException("Must provide url for CouchDbIndexReader");
+		databaseUrl = url + (url.endsWith("/") ? "" : "/");
+		try {
+			URL testUrl = new URL(databaseUrl);
+		} catch (MalformedURLException e) {
+			throw new IOException("invalid url for CouchDbIndexReader: " + url);
+		}
 		this.user = user;
 		this.password = password;
 		dmap = new DocIdMap();
@@ -385,8 +401,12 @@ public class CouchdbIndexReader extends IndexReader {
 
 	@Override
 	public TermEnum terms(Term arg0) throws IOException {
-        if (DEBUG) System.err.println(".terms2");
-		// TODO Auto-generated method stub
+		if (arg0 == null) System.err.println(".terms2 null argument");
+        if (DEBUG) System.err.println(".terms2 " + arg0.toString());
+        JSONArray jarr = CouchIndexUtils.GetSortData(user, password, databaseUrl, fieldPath, arg0.field());
+        int max = Math.max(200, jarr.toString().length());
+        System.out.println(jarr.toString().substring(0,max));
+        // TODO Auto-generated method stub
 		return null;
 	}
 	
@@ -437,5 +457,68 @@ public class CouchdbIndexReader extends IndexReader {
 			return id - ((DocPositions)arg0).id;
 		}
 	  }
+		public static JavaView getClass(String classname, List<URL> libs) throws Exception {
+			if (DEBUG) System.err.println("Attempting to load: " + classname);
+			URLClassLoader loader = new URLClassLoader(libs.toArray(new URL[0]));
+			Class<JavaView> loadClass = (Class<JavaView>) loader.loadClass(classname);
+			Class<JavaView> cl = loadClass;
+			Object o = cl.newInstance();
+			return (JavaView)o;		
+		}
+		
+		public Analyzer getAnalyzer() throws FileNotFoundException {
+			String[] designDoc = indexPath.split("_view");
+			if (designDoc == null || designDoc.length == 0) return null;
+			String designDocUrl = databaseUrl + designDoc[0];
+			if (DEBUG) System.err.println(designDocUrl);
+			JSONObject jobj = CouchIndexUtils.GetJSONDocument(user, password, designDocUrl);
+			if (jobj == null) {
+				throw new FileNotFoundException("Cannot find design doc");
+			}
+			if (DEBUG) System.err.println(jobj.toString());
+			List<URL> libs = new ArrayList<URL>();
+			try {
+				JSONObject attachments = jobj.getJSONObject("_attachments");
+				if (DEBUG) System.err.println(attachments.toString());				
+				Iterator<String> keys = (Iterator<String>)attachments.keys();
+				while (keys.hasNext()) {
+					String key = keys.next();
+					if (key.endsWith(".jar")) {
+						try {
+							final URL thisUrl = new URL(designDocUrl + key);
+							if (DEBUG) System.err.println("Adding " + thisUrl.toString());				
+							libs.add(thisUrl);
+						} catch (MalformedURLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+				try {
+					String map = CouchIndexUtils.findFieldString("map", jobj);
+					if (map == null) throw new FileNotFoundException("Can't find map field in desgin doc");
+					JSONObject objectify = new JSONObject(map);
+					String className = objectify.getString("classname");
+					if (map == null) throw new FileNotFoundException("Can't find class name");
+					JavaView jv = getClass(className, libs);
+					if (jv == null ) {
+						throw new FileNotFoundException("Can't get class from couchdb");
+					}
+					if (jv instanceof LuceneDoc) {
+						return ((LuceneDoc)jv).getAnalyzer();
+					} else {
+						return null;
+					}
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return null;
+				}
+				
+			} catch (JSONException e) {
+				return null;
+			}
+			
+		}
 
 }

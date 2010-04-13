@@ -19,6 +19,7 @@ package com.cloudant.test;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -134,7 +135,15 @@ public class SearchCouch {
       reader = new OneNormsReader(reader, normsField);
 
     Searcher searcher = new IndexSearcher(reader);
-    Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
+    Analyzer analyzer = null;
+    try {
+    	analyzer = ((CouchdbIndexReader) reader).getAnalyzer();
+    	System.out.println("Analyzer " + analyzer.getClass());
+    } catch (FileNotFoundException e) {
+    	System.out.println("Using Standard Analyzer");
+	    analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);	    	
+    }
+//    Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
 
     BufferedReader in = null;
     if (queries != null) {
