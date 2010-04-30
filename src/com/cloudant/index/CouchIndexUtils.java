@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -79,6 +80,11 @@ public class CouchIndexUtils {
 	public static JSONArray GetTermData(String user, String pass, String baseUrl, String indexUrl, Term term) {
 		String termText = term.text();
 		String field = term.field();
+		if (field.equals("cloudant_range")) {
+			String[] s = termText.split(",");
+			if (s == null || s.length != 3) return null;
+			return GetRangeData(user, pass, baseUrl, indexUrl, s[0], s[1], s[2]);
+		}
 		JSONArray termKey = new JSONArray().put(termText).put(field);
 		boolean all = field.equals("*");
 //		String url = baseUrl + indexUrl + "?stale=ok&key=\"" + termText + "\"";
@@ -117,12 +123,14 @@ public class CouchIndexUtils {
 		}
 		return outArray;
 	}
-	public static JSONArray GetSortData(String user, String pass, String baseUrl, String indexUrl, String field) {
-//		String url = baseUrl + indexUrl + "?stale=ok&key=\"" + termText + "\"";
-		String url = baseUrl + indexUrl + field + "?stale=ok&group=true";
+	public static JSONArray GetRangeData(String user, String pass, String baseUrl, String indexUrl, String field, String lowterm, String highterm) {
+		if (field == null || lowterm == null || highterm == null) return null;
+		JSONArray termKey = new JSONArray().put(lowterm).put(field);
+		JSONArray endKey = new JSONArray().put(highterm).put(field);
+		String url = baseUrl + indexUrl + "?stale=ok&startkey=" + termKey.toString() + "&endkey=" + endKey.toString() + "&inclusive_end=true";
 		JSONObject jobj = GetJSONDocument(user, pass, url);
-		System.err.println("Url: " + url);
-		System.err.println("results: " + jobj.toString());
+//		System.err.println("Url: " + url);
+//		System.err.println("results: " + jobj.toString());
 		JSONArray outArray = new JSONArray();
 		try {
 			JSONArray rows = jobj.getJSONArray("rows");
@@ -130,12 +138,16 @@ public class CouchIndexUtils {
 			for (int irow = 0; irow < rows.length(); irow++) {
 				JSONObject row = rows.getJSONObject(irow);
 				try {
+					String id = row.getString("id");
+					JSONArray key = row.getJSONArray("key");
+					if (key == null || key.length() < 2 || !field.equals(key.getString(1))) continue;
 					JSONArray values = row.getJSONArray("value");
 //			System.out.println("values: " + values.toString());
 					if (values != null) {
 						for (int i=0;i<values.length();i++) {
 							JSONObject v = values.getJSONObject(i);
 //							if (all || v.getString("field").equals(field)) {
+								v.put("_id", id);
 								outArray.put(v);
 //							}
 						}
@@ -143,6 +155,26 @@ public class CouchIndexUtils {
 				} catch (JSONException je) {
 					/* no values in this row */
 				}
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());			
+		}
+		return outArray;
+	}
+	public static JSONArray GetSortData(String user, String pass, String baseUrl, String indexUrl, String field) {
+//		String url = baseUrl + indexUrl + "?stale=ok&key=\"" + termText + "\"";
+		String url = baseUrl + indexUrl + field + "?stale=ok";
+		JSONObject jobj = GetJSONDocument(user, pass, url);
+		System.err.println("Url: " + url);
+		System.err.println("results: " + jobj.toString().substring(0,500));
+		JSONArray outArray = new JSONArray();
+		try {
+			JSONArray rows = jobj.getJSONArray("rows");
+			if (rows == null || rows.length()==0) return outArray;
+			for (int irow = 0; irow < rows.length(); irow++) {
+				JSONObject row = rows.getJSONObject(irow);
+				outArray.put(row);
+//							}
 			}
 		} catch (Exception e) {
 			System.out.println(e.getMessage());			
@@ -159,8 +191,10 @@ public class CouchIndexUtils {
 		try {
 		if (url == null) return null;
 		String fullUrl = url;
+
 //		System.out.println(fullUrl);
 		URL Url = new URL(fullUrl);
+//		URL Url = new URL(tUrl.getProtocol(),tUrl.getHost(),URLEncoder.encode(tUrl.getPath(),"UTF-8"));
 		HttpURLConnection conn = (HttpURLConnection)Url.openConnection(); 
 		conn.setDoOutput(true);
 		conn.setRequestMethod("GET");

@@ -13,14 +13,18 @@ import javax.servlet.http.*;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopFieldDocs;
 import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.util.Version;
@@ -33,7 +37,7 @@ import com.cloudant.index.CouchdbIndexReader;
 
 
 
-public class Search extends HttpServlet implements Closeable {
+public class RangeSearch extends HttpServlet implements Closeable {
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String field = "*";
@@ -43,11 +47,14 @@ public class Search extends HttpServlet implements Closeable {
 		out = response.getWriter();
 		JSONObject jout = new JSONObject();
 		String query = request.getParameter("q");
-		if (query == null) {
+		String range = request.getParameter("range");
+		String rangeStart = request.getParameter("rangestart");
+		String rangeEnd = request.getParameter("rangeend");
+		if (query == null && (range==null || rangeStart==null || rangeEnd==null)) {
+			out.println("must specify query with \"q=\" or rangefield and values with \"range=<field>&rangestart=<start>&rangeend=<end>\"");
 			out.close();
 			return; 
 		}
-		String sortField = request.getParameter("sortby");
 		String startString = request.getParameter("start");
 		int start = 0;
 		if (startString != null) {
@@ -73,7 +80,7 @@ public class Search extends HttpServlet implements Closeable {
 //		String urlString = request.getParameter("url");
 		try {
 		if (urlString == null) {
-			urlString = "http://ec2-174-129-116-148.compute-1.amazonaws.com:5984/twitter/";
+			urlString = "http://ec2-174-129-116-148.compute-1.amazonaws.com:5984/hayward/";
 //			urlString = "http://localhost:5984/twitter/";
 			// comment out for testing
 //			jout.put("error", "need to specify index url as parameter");
@@ -86,22 +93,20 @@ public class Search extends HttpServlet implements Closeable {
 
 	    Searcher searcher = new IndexSearcher(reader);
 	    Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
-	    Sort sorter = null;
-	    if (sortField !=  null) {
-	    	sorter = new Sort(new SortField(sortField, SortField.LONG));
-	    }
-	    // need to mess with security manager to get this working
-	    //	    Analyzer analyzer = null;
-//	    try {
-//	    	analyzer = ((CouchdbIndexReader) reader).getAnalyzer();
-//	    } catch (FileNotFoundException e) {
-//	    	System.out.println("Using Standard Analyzer");
-//		    analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);	    	
-//	    }
 	    QueryParser parser = new QueryParser(Version.LUCENE_CURRENT, field, analyzer);
 	    Query luceneQuery = null;
 	    try {
-	    	luceneQuery = parser.parse(query);
+	    	if (query != null) {
+	    		luceneQuery = parser.parse(query);
+	    	}
+		    if (range != null && rangeStart != null && rangeEnd != null) {
+		    	Term t = new Term("cloudant_range",range + "," + rangeStart + ","+rangeEnd);
+		    	Query rangeQuery = new TermQuery(t);
+		    	BooleanQuery bq = new BooleanQuery();
+		    	if (luceneQuery != null) bq.add(luceneQuery,BooleanClause.Occur.MUST);
+		    	bq.add(rangeQuery,BooleanClause.Occur.MUST);
+		    	luceneQuery = bq;
+		    }
 	    } catch (ParseException pe) {
 			jout.put("error", "cannot parse query " + query);
 			out.println(jout.toString());
@@ -112,18 +117,12 @@ public class Search extends HttpServlet implements Closeable {
 	    long starttime = System.currentTimeMillis();
 	    ScoreDoc[] hits = null;
 	    int numTotalHits = 0;
-	    if (sorter == null) {
-	    	int maxToFetch = (urlString.contains("twitter") ? 10000 : end);
-	    	TopScoreDocCollector collector = TopScoreDocCollector.create(
+	    int maxToFetch = end;
+	    TopScoreDocCollector collector = TopScoreDocCollector.create(
 			          maxToFetch, false);
-	    	searcher.search(luceneQuery, collector);
-	    	hits = collector.topDocs().scoreDocs;
-		    numTotalHits = collector.getTotalHits();
-	    } else {
-	    	TopFieldDocs docs = searcher.search(luceneQuery, null, end, sorter);
-	    	hits = docs.scoreDocs;
-	    	numTotalHits = docs.totalHits;
-	    }
+	    searcher.search(luceneQuery, collector);
+	    hits = collector.topDocs().scoreDocs;
+		numTotalHits = collector.getTotalHits();
 	    long totalTime = System.currentTimeMillis() - starttime;
 	      
 //	    System.out.println("number of hits = " + numTotalHits);

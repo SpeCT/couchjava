@@ -22,4 +22,17 @@
 		<servlet-name>Search</servlet-name>
 		<url-pattern>/Search</url-pattern>
 	</servlet-mapping>
+	<servlet>
+		<description>
+		rangesearch</description>
+		<display-name>
+		RangeSearch</display-name>
+		<servlet-name>RangeSearch</servlet-name>
+		<servlet-class>
+		com.cloudant.searchserver.RangeSearch</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>RangeSearch</servlet-name>
+		<url-pattern>/RangeSearch</url-pattern>
+	</servlet-mapping>
 </web-app>
