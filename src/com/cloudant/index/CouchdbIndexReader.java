@@ -10,12 +10,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -51,7 +54,7 @@ public class CouchdbIndexReader extends IndexReader {
 	static boolean DEBUG = false;
 	private Map<Term, Map<Integer, List<Integer>>> data = null;
 	// mapping of <field, term> pairs
-	private Map<String, SortedMap<String, Object>> termData = null;
+	private Map<String, TreeSet<Object>> termData = null;
 	
 	public static IndexReader open(String url) throws IOException {
 		return new CouchdbIndexReader(url, null, null);
@@ -73,7 +76,7 @@ public class CouchdbIndexReader extends IndexReader {
 		this.password = password;
 		dmap = new DocIdMap();
 		data = new HashMap<Term, Map<Integer, List<Integer>>>();
-		termData = new HashMap<String, SortedMap<String, Object>>();
+		termData = new HashMap<String, TreeSet<Object>>();
 	}
 
 	public int getLuceneId(String couchid) {
@@ -408,18 +411,19 @@ public class CouchdbIndexReader extends IndexReader {
 	public TermEnum terms(Term arg0) throws IOException {
 		if (arg0 == null) System.err.println(".terms2 null argument");
         if (DEBUG) System.err.println(".terms2 " + arg0.toString());
-        if (!termData.containsKey(arg0.field())) {
+//        if (!termData.containsKey(arg0.field())) {
+// this is baffling why the above does not work
+        if (true) {
         	JSONArray jarr = CouchIndexUtils.GetSortData(user, password, databaseUrl, fieldPath, arg0.field());
-        	SortedMap<String, Object> arr = new TreeMap<String, Object>();
-        	System.out.println("length of sort data: " + jarr.length());
+        	TreeSet<Object> arr = new TreeSet<Object>();
+        	if (DEBUG) System.out.println("length of sort data: " + jarr.length());
         	for (int i = 0; i < jarr.length(); i++) {
         		try {
         		JSONObject jobj = jarr.getJSONObject(i);
-        		String uuid = jobj.getString("id");
-        		Object obj = jobj.get("key");
-        		arr.put(uuid, obj);
+//        		String uuid = jobj.getString("id");
+        		JSONArray obj = jobj.getJSONArray("key");
+        		arr.add(obj.get(1));
 //        		int max = Math.max(200, jarr.toString().length());
-        		if (i < 10) System.out.println(jobj.toString());
         		} catch (JSONException je) {
         			System.err.println(je.toString());
         		}
@@ -432,35 +436,25 @@ public class CouchdbIndexReader extends IndexReader {
 	private class thisTermEnum extends TermEnum {
 		String currentField;
 		Object currentObject;
-		SortedMap<Object, Integer> map;
+		TreeSet<Object> map;
 		Iterator<Object> iter = null; 
 		
 		public thisTermEnum(String field) {
 			currentField = field;
 			// this map contains everything -- need to prune
-			SortedMap<String,Object> fullMap = termData.get(currentField);
-			if (fullMap == null) {
-				System.out.println("no data in termdata map");
+			map = termData.get(currentField);
+			if (DEBUG) System.out.println("Getting term enum for " + field);
+			if (DEBUG) System.out.println("termdata length = " + termData.size());
+			if (DEBUG) System.out.println("length of array = " + map.size());
+			if (map == null) {
+				System.out.println("TermEnum: no data in termdata map");
 				return;
 			}
-			map = new TreeMap<Object, Integer>();
-			// <= on purpose!!!
-			System.out.println("Warming cache to " + dmap.maxDoc());
-			for (int i = 0; i <= dmap.maxDoc(); i++) {
-				try {
-					String couchId = dmap.getCouchId(i);
-					Object key = fullMap.get(couchId);
-					int newVal = 1;
-					if (map.containsKey(key)) newVal += map.get(key);
-					System.out.println("Adding " + key.toString());
-					map.put(key, newVal);
-				} catch (NoSuchFieldException e) {
-						System.out.println(e.toString());
-				}
-			}
-			iter = map.keySet().iterator();
-			if (iter != null) {
+			iter = map.iterator();
+			if (iter != null && iter.hasNext()) {
 				currentObject = iter.next();
+			} else {
+				System.out.println("TermEnum: empty iterator -- length of set = " + map.size());				
 			}
 		}
 		
@@ -470,11 +464,11 @@ public class CouchdbIndexReader extends IndexReader {
 
 		@Override
 		public int docFreq() {
-			return map.get(currentObject);
+			// Fix this
+			return map.contains(currentObject) ? 1 : 0;
 		}
 
 		public boolean next() throws IOException {
-//			System.err.println(".termenum next");
 			if (map == null) throw new IOException("No term data");
 			if (iter != null && iter.hasNext()) {
 				currentObject = iter.next();
@@ -486,7 +480,7 @@ public class CouchdbIndexReader extends IndexReader {
 
 		public Term term() {
 			if (currentObject == null) System.err.println("null object");
-			System.out.println(currentField + " " + String.valueOf(currentObject));
+			if (DEBUG) System.out.println(currentField + " " + String.valueOf(currentObject));
 			return new Term(currentField, String.valueOf(currentObject));
 		}
 		

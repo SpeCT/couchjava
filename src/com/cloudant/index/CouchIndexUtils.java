@@ -17,6 +17,8 @@ import org.json.JSONObject;
 
 public class CouchIndexUtils {
 	
+	private static boolean DEBUG = false;
+	
 	public static JSONObject ConvertStringToJSON(String input) {
 		if (input==null) return null;
 		try {
@@ -162,11 +164,12 @@ public class CouchIndexUtils {
 		return outArray;
 	}
 	public static JSONArray GetSortData(String user, String pass, String baseUrl, String indexUrl, String field) {
-//		String url = baseUrl + indexUrl + "?stale=ok&key=\"" + termText + "\"";
-		String url = baseUrl + indexUrl + field + "?stale=ok";
+//		String url = baseUrl + indexUrl + "?stale=ok&group=true&key=\"" + termText + "\"";
+		String url = baseUrl + indexUrl + field + "?stale=ok&group=true";
 		JSONObject jobj = GetJSONDocument(user, pass, url);
-		System.err.println("Url: " + url);
-		System.err.println("results: " + jobj.toString().substring(0,500));
+		if (DEBUG) System.err.println("Url: " + url);
+		int maxToDisplay = Math.min(jobj.length(), 500); 
+		if (DEBUG) System.err.println("results: " + jobj.toString().substring(0,maxToDisplay));
 		JSONArray outArray = new JSONArray();
 		try {
 			JSONArray rows = jobj.getJSONArray("rows");
