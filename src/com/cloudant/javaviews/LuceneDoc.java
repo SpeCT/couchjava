@@ -1,4 +1,4 @@
-package com.cloudant.javaviews;
+`package com.cloudant.javaviews;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,10 +20,7 @@ public class LuceneDoc implements JavaView {
 	private Map<String, Float> fieldsToStore = null;
 	
 	private int reduceCount = 0;
-<<<<<<< .merge_file_l9ytIL
 	
-=======
->>>>>>> .merge_file_ZGuDVJ
 
 	public Analyzer getAnalyzer() {
 		return new StandardAnalyzer(Version.LUCENE_CURRENT);
@@ -49,7 +46,6 @@ public class LuceneDoc implements JavaView {
 			// Document d = new Document();
 			Analyzer analyzer = getAnalyzer();
 			MemoryIndex index = new MemoryIndex();
-<<<<<<< .merge_file_l9ytIL
 			// user specified field set
 			if (fieldsToStore != null) {
 				for (String field : fieldsToStore.keySet()) {
@@ -66,12 +62,6 @@ public class LuceneDoc implements JavaView {
 					if (field != null && text != null) {
 						index.addField(field, text, analyzer, 1.0f);
 					}
-=======
-			for (String field : fieldsToStore.keySet()) {
-				String text = findFieldString(field, doc);
-				if (field != null && text != null) {
-					index.addField(field, text, analyzer, fieldsToStore.get(field));
->>>>>>> .merge_file_ZGuDVJ
 				}
 			}
 			out = index.jsonMap();
@@ -113,15 +103,9 @@ public class LuceneDoc implements JavaView {
 //							uniques.add(fields.getString(k));
 //						}
 //					} else {
-<<<<<<< .merge_file_l9ytIL
 					Iterator<JSONArray> iter = (Iterator<JSONArray>)jobj.keys();
 					while (iter.hasNext()) {
 						String key = (iter.next()).toString();
-=======
-					Iterator<String> iter = (Iterator<String>)jobj.keys();
-					while (iter.hasNext()) {
-						String key = iter.next();
->>>>>>> .merge_file_ZGuDVJ
 						if (wordCount.containsKey(key)) {
 							wordCount.put(key, wordCount.get(key).put(jobj.getJSONArray(key)));
 						} else {
