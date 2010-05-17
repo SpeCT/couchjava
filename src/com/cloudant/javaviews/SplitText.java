@@ -118,6 +118,7 @@ public class SplitText implements JavaView {
 					wordCount.put(key, 1);
 				}
 			} catch (JSONException je) {
+				je.printStackTrace();
 				Log("Fishy map result");
 			} 
 		}
@@ -130,14 +131,11 @@ public class SplitText implements JavaView {
 					Log("Problem update output array");
 				}
 			}
-			if (job.length() == 0) {
-				return new JSONArray().put(JSONObject.NULL);
-			} else {
+			if (job.length() != 0) {
 				return new JSONArray().put(job);
 			}
-		} else {
-			return new JSONArray().put(JSONObject.NULL);
 		}
+		return new JSONArray().put(JSONObject.NULL);
 	}
 
 	public void Configure(String config) {

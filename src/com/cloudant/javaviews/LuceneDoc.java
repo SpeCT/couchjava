@@ -9,6 +9,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import com.cloudant.couchdbjavaserver.*;
+import com.cloudant.index.CouchIndexUtils;
+
 import org.apache.lucene.analysis.standard.*;
 import org.apache.lucene.analysis.*;
 import org.apache.lucene.util.*;
@@ -18,7 +20,15 @@ public class LuceneDoc implements JavaView {
 	private Map<String, Float> fieldsToStore = null;
 	
 	private int reduceCount = 0;
+<<<<<<< .merge_file_l9ytIL
+	
+=======
+>>>>>>> .merge_file_ZGuDVJ
 
+	public Analyzer getAnalyzer() {
+		return new StandardAnalyzer(Version.LUCENE_CURRENT);
+	}
+	
 	public void Log(String message) {
 		JSONArray out = new JSONArray();
 		out.put("log");
@@ -37,12 +47,31 @@ public class LuceneDoc implements JavaView {
 			// StandardAnalyzer(Version.LUCENE_CURRENT),
 			// IndexWriter.MaxFieldLength.UNLIMITED);
 			// Document d = new Document();
-			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
+			Analyzer analyzer = getAnalyzer();
 			MemoryIndex index = new MemoryIndex();
+<<<<<<< .merge_file_l9ytIL
+			// user specified field set
+			if (fieldsToStore != null) {
+				for (String field : fieldsToStore.keySet()) {
+					String text = findFieldString(field, doc);
+					if (field != null && text != null) {
+						index.addField(field, text, analyzer, fieldsToStore.get(field));
+					}
+				}
+			} else {
+				//index everything 
+				Map<String, String> mapped = CouchIndexUtils.MapJSONObject(doc, null);
+				for (String field : mapped.keySet()) {
+					String text = mapped.get(field);
+					if (field != null && text != null) {
+						index.addField(field, text, analyzer, 1.0f);
+					}
+=======
 			for (String field : fieldsToStore.keySet()) {
 				String text = findFieldString(field, doc);
 				if (field != null && text != null) {
 					index.addField(field, text, analyzer, fieldsToStore.get(field));
+>>>>>>> .merge_file_ZGuDVJ
 				}
 			}
 			out = index.jsonMap();
@@ -58,8 +87,13 @@ public class LuceneDoc implements JavaView {
 		return out;
 	}
 
-	@Override
 	public JSONArray ReReduce(JSONArray reduceResults) {
+//		return new JSONArray().put(JSONObject.NULL);
+		return ReReduceAggregate(reduceResults);
+	}
+	
+
+	public JSONArray ReReduceAggregate(JSONArray reduceResults) {
 		// TODO Auto-generated method stub
 		if (reduceResults == null || reduceResults.length() == 0) {
 			Log("Reduce called with empty map");
@@ -79,9 +113,15 @@ public class LuceneDoc implements JavaView {
 //							uniques.add(fields.getString(k));
 //						}
 //					} else {
+<<<<<<< .merge_file_l9ytIL
+					Iterator<JSONArray> iter = (Iterator<JSONArray>)jobj.keys();
+					while (iter.hasNext()) {
+						String key = (iter.next()).toString();
+=======
 					Iterator<String> iter = (Iterator<String>)jobj.keys();
 					while (iter.hasNext()) {
 						String key = iter.next();
+>>>>>>> .merge_file_ZGuDVJ
 						if (wordCount.containsKey(key)) {
 							wordCount.put(key, wordCount.get(key).put(jobj.getJSONArray(key)));
 						} else {
@@ -115,8 +155,12 @@ public class LuceneDoc implements JavaView {
 		return new JSONArray().put(JSONObject.NULL);
 	}
 
-	@Override
 	public JSONArray Reduce(JSONArray mapResults) {
+//		return new JSONArray().put(JSONObject.NULL);
+		return ReduceAggregate(mapResults);
+	}
+	
+	private JSONArray ReduceAggregate(JSONArray mapResults) {
 		if (mapResults == null || mapResults.length() == 0) {
 			Log("Reduce called with empty map");
 			return new JSONArray().put(JSONObject.NULL);

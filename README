@@ -13,17 +13,22 @@ To attach to couchdb:
 
 1) Add the following lines to your couchdb local.ini file:
 
-[query_servers]
-java=/usr/bin/java -jar <full-path-to-jar-file>/couchdb-java-viewserver.jar
+[native_query_servers]
+java = {showroom_ejje_server, start_link, ['ejje@localhost', "com.cloudant.couchdbjavaserver.JavaViewServer"]}
 
-where you have of course changed the path to the jar file!
+2) Start the JVM 'node' with the view server code
+
+$ java -cp ./dist/couchdb-java-viewserver.jar com.cloudant.ejje.Ejje ejje@localhost cookiename
+
+Where you may need to modify the path of the jar, and the name/cookie for the node.  Be sure to match the node name 'ejje@localhost' in both .ini and launch command.
+
 
 Implementing a view:
 
 There is an example view is com/cloudant/javaviews/SplitText.java
 
 A view can be created by creating a java class that implements the methods of the com.cloudant.couchdbjavaserver.JavaView interface.
- 
+
 Once you have your class, make it into a jar archive (being sure to include any needed non-standard libaries).
 
 To compile, do "ant views.jar".  This will create a jar archive dist/javaviews.jar.
@@ -33,11 +38,11 @@ You now need to load the view into couch db.  For this example, my database is n
 {
     "_id":"_design/splittext",
     "language":"java",
-    "views" : 
+    "views" :
 	{
 	"title" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"title\"}","reduce":"com.cloudant.javaviews.SplitText"},
 	"text" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"text\"}","reduce":"com.cloudant.javaviews.SplitText"}
-	}    
+	}
 }
 
 Note that you need to pass a single variable to "map", the full class name of your JavaView implmentation.  The "configure" field is optional and allows you to configure your class at run time.  Upload this file (which I have saved on disk as splittext.json):
@@ -57,4 +62,3 @@ gets all documents with "an" in field "text".
 curl -X GET http://localhost:5984/wikipedia/_design/splittext/_view/text?key=\"an\"
 
 counts documents with "an" in field "text"
-
