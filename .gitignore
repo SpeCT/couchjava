@@ -4,3 +4,8 @@ docs/*
 *~
 semantic.cache
 build.properties
+<<<<<<< master:.gitignore
+=======
+views/splittext.json
+.classpath
+>>>>>>> local:.gitignore
