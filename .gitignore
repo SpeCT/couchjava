@@ -2,10 +2,7 @@ bin/*
 dist/*
 docs/*
 *~
+run
 semantic.cache
 build.properties
-<<<<<<< master:.gitignore
-=======
-views/splittext.json
-.classpath
->>>>>>> local:.gitignore
+
