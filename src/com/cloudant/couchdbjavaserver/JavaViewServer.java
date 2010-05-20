@@ -62,6 +62,7 @@ public class JavaViewServer extends ViewServer {
 				String urlString = ErlangJson.binstr(data, 1);
 //				Log("add_library " + urlString);
 				boolean res = classUrls.addUrl(urlString);
+//				Log("add_library done");
 				if( res ) {
 					return "true";
 				} else {

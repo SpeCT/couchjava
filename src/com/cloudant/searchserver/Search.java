@@ -73,15 +73,16 @@ public class Search extends HttpServlet implements Closeable {
 //		String urlString = request.getParameter("url");
 		try {
 		if (urlString == null) {
-			urlString = "http://ec2-174-129-116-148.compute-1.amazonaws.com:5984/twitter/";
-//			urlString = "http://localhost:5984/twitter/";
+//			urlString = "http://ec2-174-129-116-148.compute-1.amazonaws.com:5984/twitter/";
+			urlString = "http://localhost:5984/twitter/";
 			// comment out for testing
 //			jout.put("error", "need to specify index url as parameter");
 //			out.println(jout.toString());
 //			out.close();
 //			return;
 		}
-	    IndexReader reader = CouchdbIndexReader.open(urlString, "admin", "iaj3nubr3abr2oyff1ye");
+//	    IndexReader reader = CouchdbIndexReader.open(urlString, "admin", "iaj3nubr3abr2oyff1ye");
+	    IndexReader reader = CouchdbIndexReader.open(urlString);
 	    
 
 	    Searcher searcher = new IndexSearcher(reader);

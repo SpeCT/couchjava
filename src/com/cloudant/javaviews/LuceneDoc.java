@@ -1,4 +1,4 @@
-`package com.cloudant.javaviews;
+package com.cloudant.javaviews;
 
 import java.util.HashMap;
 import java.util.HashSet;

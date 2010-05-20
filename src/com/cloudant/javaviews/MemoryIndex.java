@@ -675,7 +675,8 @@ public class MemoryIndex implements Serializable {
 				} catch (JSONException e) {
 					// TODO Auto-generated catch block
 				} 
-	  			jout.put(new JSONArray().put((new JSONArray()).put(term).put(field)).put(tout));
+//	  			jout.put(new JSONArray().put((new JSONArray()).put(term).put(field)).put(tout));
+	  			jout.put(new JSONArray().put((new JSONArray()).put(field).put(term)).put(tout));
   			}
   		}
   		return jout;

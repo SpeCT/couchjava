@@ -49,12 +49,11 @@ public class CouchdbIndexReader extends IndexReader {
 	private String user;
 	private String password;
 	private String indexPath = "_design/lucene/_view/index";
-	private String fieldPath = "_design/fields/_view/";
 	private DocIdMap dmap;
 	static boolean DEBUG = false;
 	private Map<Term, Map<Integer, List<Integer>>> data = null;
 	// mapping of <field, term> pairs
-	private Map<String, TreeSet<Object>> termData = null;
+	private Map<String, TreeMap<Object, Integer>> termData = null;
 	
 	public static IndexReader open(String url) throws IOException {
 		return new CouchdbIndexReader(url, null, null);
@@ -76,7 +75,7 @@ public class CouchdbIndexReader extends IndexReader {
 		this.password = password;
 		dmap = new DocIdMap();
 		data = new HashMap<Term, Map<Integer, List<Integer>>>();
-		termData = new HashMap<String, TreeSet<Object>>();
+		termData = new HashMap<String, TreeMap<Object, Integer>>();
 	}
 
 	public int getLuceneId(String couchid) {
@@ -124,8 +123,7 @@ public class CouchdbIndexReader extends IndexReader {
 	public int docFreq(Term arg0) throws IOException {
 		// This is only true for non wild card terms. Fix for wild card.
 		if (DEBUG) System.err.println("docFreq");
-		JSONArray arr = CouchIndexUtils.GetTermData(user, password, databaseUrl, indexPath, arg0);
-		return arr.length();
+		return CouchIndexUtils.GetDocFreq(user, password, databaseUrl, indexPath, arg0);
 	}
 
 	@Override
@@ -403,8 +401,8 @@ public class CouchdbIndexReader extends IndexReader {
 	public TermEnum terms() throws IOException {
 		// TODO Auto-generated method stub
         if (DEBUG) System.err.println(".terms");
-
-		return null;
+//		return terms(new Term("*","*"));
+        return null;
 	}
 
 	@Override
@@ -414,21 +412,29 @@ public class CouchdbIndexReader extends IndexReader {
 //        if (!termData.containsKey(arg0.field())) {
 // this is baffling why the above does not work
         if (true) {
-        	JSONArray jarr = CouchIndexUtils.GetSortData(user, password, databaseUrl, fieldPath, arg0.field());
-        	TreeSet<Object> arr = new TreeSet<Object>();
+        	JSONArray jarr = CouchIndexUtils.GetSortData(user, password, databaseUrl, indexPath, arg0.field());
+        	TreeMap<Object, Integer> arr = new TreeMap<Object, Integer>();
         	if (DEBUG) System.out.println("length of sort data: " + jarr.length());
+        	String lastField = arg0.field();
         	for (int i = 0; i < jarr.length(); i++) {
         		try {
         		JSONObject jobj = jarr.getJSONObject(i);
 //        		String uuid = jobj.getString("id");
         		JSONArray obj = jobj.getJSONArray("key");
-        		arr.add(obj.get(1));
+        		int docFreq = jobj.getInt("value");
+        		String field = obj.getString(0);
+        		if (!field.equals(lastField)) {
+        			termData.put(lastField, arr);
+        			arr = new TreeMap<Object, Integer>();
+        			lastField = field;
+        		}
+        		arr.put(obj.get(1), docFreq);
 //        		int max = Math.max(200, jarr.toString().length());
         		} catch (JSONException je) {
         			System.err.println(je.toString());
         		}
         	}
-        	termData.put(arg0.field(), arr);
+        	termData.put(lastField, arr);
         }
 		return new thisTermEnum(arg0.field());
 	}
@@ -436,7 +442,7 @@ public class CouchdbIndexReader extends IndexReader {
 	private class thisTermEnum extends TermEnum {
 		String currentField;
 		Object currentObject;
-		TreeSet<Object> map;
+		TreeMap<Object, Integer> map;
 		Iterator<Object> iter = null; 
 		
 		public thisTermEnum(String field) {
@@ -450,7 +456,7 @@ public class CouchdbIndexReader extends IndexReader {
 				System.out.println("TermEnum: no data in termdata map");
 				return;
 			}
-			iter = map.iterator();
+			iter = map.keySet().iterator();
 			if (iter != null && iter.hasNext()) {
 				currentObject = iter.next();
 			} else {
@@ -465,7 +471,7 @@ public class CouchdbIndexReader extends IndexReader {
 		@Override
 		public int docFreq() {
 			// Fix this
-			return map.contains(currentObject) ? 1 : 0;
+			return map.containsKey(currentObject) ? map.get(currentObject) : 0;
 		}
 
 		public boolean next() throws IOException {

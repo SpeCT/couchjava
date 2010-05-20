@@ -6,8 +6,10 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.index.Term;
@@ -87,13 +89,14 @@ public class CouchIndexUtils {
 			if (s == null || s.length != 3) return null;
 			return GetRangeData(user, pass, baseUrl, indexUrl, s[0], s[1], s[2]);
 		}
-		JSONArray termKey = new JSONArray().put(termText).put(field);
-		boolean all = field.equals("*");
+		JSONArray termKey = new JSONArray().put(field).put(termText);
+		//re-implement later
+		//		boolean all = field.equals("*");
 //		String url = baseUrl + indexUrl + "?stale=ok&key=\"" + termText + "\"";
-		String url = baseUrl + indexUrl + "?stale=ok&key=" + termKey.toString();
-		if (all) {
-			url = baseUrl + indexUrl + "?stale=ok&startkey=[\"" + termText + "\"]&endkey=[\"" + termText + "\",{}]&inclusive_end=true";
-		}
+		String url = baseUrl + indexUrl + "?stale=ok&reduce=false&key=" + termKey.toString();
+//		if (all) {
+//			url = baseUrl + indexUrl + "?stale=ok&startkey=[\"" + termText + "\"]&endkey=[\"" + termText + "\",{}]&inclusive_end=true";
+//		}
 		JSONObject jobj = GetJSONDocument(user, pass, url);
 //		System.err.println("Url: " + url);
 //		System.err.println("results: " + jobj.toString());
@@ -125,11 +128,71 @@ public class CouchIndexUtils {
 		}
 		return outArray;
 	}
+
+	public static int GetDocFreq(String user, String pass, String baseUrl, String indexUrl, Term term) {
+		String termText = term.text();
+		String field = term.field();
+		JSONArray termKey = new JSONArray().put(field).put(termText);
+		//re-implement later
+		//		boolean all = field.equals("*");
+		String url = baseUrl + indexUrl + "?stale=ok&group=true&group_level=2&key=" + termKey.toString();
+//		if (all) {
+//			url = baseUrl + indexUrl + "?stale=ok&startkey=[\"" + termText + "\"]&endkey=[\"" + termText + "\",{}]&inclusive_end=true";
+//		}
+		JSONObject jobj = GetJSONDocument(user, pass, url);
+//		System.err.println("Url: " + url);
+//		System.err.println("results: " + jobj.toString());
+		JSONArray outArray = new JSONArray();
+		try {
+			JSONArray rows = jobj.getJSONArray("rows");
+			if (rows == null || rows.length()==0) return 0;
+			// this should be length 1
+			JSONObject row = rows.getJSONObject(0);
+				try {
+					final int value = row.getInt("value");
+					return value;
+				} catch (JSONException je) {
+					return 0;
+					/* no values in this row */
+				}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());			
+			return 0;
+		}
+	}
+
+	public static List<String> GetFieldNames(String user, String pass, String baseUrl, String indexUrl) {
+		String url = baseUrl + indexUrl + "?stale=ok&group=true&group_level=1";
+		List<String> fields = new ArrayList<String>();
+		JSONObject jobj = GetJSONDocument(user, pass, url);
+//		System.err.println("Url: " + url);
+//		System.err.println("results: " + jobj.toString());
+		try {
+			JSONArray rows = jobj.getJSONArray("rows");
+			if (rows == null || rows.length()==0) return fields;
+			for (int irow = 0; irow < rows.length(); irow++) {
+				JSONObject row = rows.getJSONObject(irow);
+			// this should be length 1
+				try {
+					final String value = row.getJSONArray("key").getString(0);
+					fields.add(value);
+				} catch (JSONException je) {
+					/* no values in this row */
+				}
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());			
+		}
+		return fields;
+	}
+
+	
+	
 	public static JSONArray GetRangeData(String user, String pass, String baseUrl, String indexUrl, String field, String lowterm, String highterm) {
 		if (field == null || lowterm == null || highterm == null) return null;
-		JSONArray termKey = new JSONArray().put(lowterm).put(field);
-		JSONArray endKey = new JSONArray().put(highterm).put(field);
-		String url = baseUrl + indexUrl + "?stale=ok&startkey=" + termKey.toString() + "&endkey=" + endKey.toString() + "&inclusive_end=true";
+		JSONArray termKey = new JSONArray().put(field).put(lowterm);
+		JSONArray endKey = new JSONArray().put(field).put(highterm);
+		String url = baseUrl + indexUrl + "?stale=ok&reduce=false&startkey=" + termKey.toString() + "&endkey=" + endKey.toString() + "&inclusive_end=true";
 		JSONObject jobj = GetJSONDocument(user, pass, url);
 //		System.err.println("Url: " + url);
 //		System.err.println("results: " + jobj.toString());
@@ -142,7 +205,7 @@ public class CouchIndexUtils {
 				try {
 					String id = row.getString("id");
 					JSONArray key = row.getJSONArray("key");
-					if (key == null || key.length() < 2 || !field.equals(key.getString(1))) continue;
+					if (key == null || key.length() < 2 || !field.equals(key.getString(0))) continue;
 					JSONArray values = row.getJSONArray("value");
 //			System.out.println("values: " + values.toString());
 					if (values != null) {
@@ -165,7 +228,7 @@ public class CouchIndexUtils {
 	}
 	public static JSONArray GetSortData(String user, String pass, String baseUrl, String indexUrl, String field) {
 //		String url = baseUrl + indexUrl + "?stale=ok&group=true&key=\"" + termText + "\"";
-		String url = baseUrl + indexUrl + field + "?stale=ok&group=true";
+		String url = baseUrl + indexUrl + "?stale=ok&group=true&group_level=2&startkey=[\"" + field + "\"]&endkey=[\"" + field + "\",{}]&inclusive_end=true";
 		JSONObject jobj = GetJSONDocument(user, pass, url);
 		if (DEBUG) System.err.println("Url: " + url);
 		int maxToDisplay = Math.min(jobj.length(), 500); 
