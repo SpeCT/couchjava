@@ -24,6 +24,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -70,7 +71,7 @@ public class SearchCouch {
   /** Simple command-line based search demo. */
   public static void main(String[] args) throws Exception {
     String usage =
-      "Usage:\tjava com.cloudant.test.SearchCounch -indexurl i [-user u] [-password p] [-field f] [-repeat n] [-queries file] [-raw] [-norms field] [-paging hitsPerPage]";
+      "Usage:\tjava com.cloudant.test.SearchCounch -index i [-user u] [-password p] [-field f] [-repeat n] [-queries file] [-raw] [-norms field] [-paging hitsPerPage]";
     usage += "\n\tSpecify 'false' for hitsPerPage to use streaming instead of paging search.";
     if (args.length == 0 || (args.length > 0 && ("-h".equals(args[0]) || "-help".equals(args[0])))) {
       System.out.println(usage);
@@ -130,6 +131,11 @@ public class SearchCouch {
     
 //    IndexReader reader = IndexReader.open(FSDirectory.open(new File(index)), true); // only searching, so read-only=true
     IndexReader reader = CouchdbIndexReader.open(index, user, password);
+    List<String> fields = (List<String>) reader.getFieldNames(null);
+    System.out.println("Fields:");
+    for (String key : fields) {
+    	System.out.println(key);
+    }
     
     if (normsField != null)
       reader = new OneNormsReader(reader, normsField);

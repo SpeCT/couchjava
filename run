@@ -1,3 +1,5 @@
 #!/bin/bash
-
-java -cp ./dist/couchdb-java-viewserver.jar com.cloudant.ejje.Ejje ejje@boorad.local doubledoozie
+epmd -daemon
+java -Djava.security.manager -Djava.security.policy=policy.txt -cp ./dist/couchdb-java-viewserver.jar com.cloudant.ejje.Ejje ejje@hardtke-laptop.local doubledoozie
+#java -cp ./dist/couchdb-java-viewserver.jar com.cloudant.ejje.Ejje ejje@hardtke-laptop.gateway.2wire.net doubledoozie
+#java -cp ./dist/couchdb-java-viewserver.jar:./dist/javaviews.jar com.cloudant.ejje.Ejje ejje@hardtke-laptop.local doubledoozie

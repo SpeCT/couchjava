@@ -172,9 +172,11 @@ public class CouchIndexUtils {
 			if (rows == null || rows.length()==0) return fields;
 			for (int irow = 0; irow < rows.length(); irow++) {
 				JSONObject row = rows.getJSONObject(irow);
+//				System.out.println(row.toString());
 			// this should be length 1
 				try {
-					final String value = row.getJSONArray("key").getString(0);
+					String value = row.getJSONArray("key").getString(0);
+//					System.out.println(value);
 					fields.add(value);
 				} catch (JSONException je) {
 					/* no values in this row */

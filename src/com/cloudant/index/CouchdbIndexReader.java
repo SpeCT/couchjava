@@ -153,7 +153,7 @@ public class CouchdbIndexReader extends IndexReader {
 	public Collection<String> getFieldNames(FieldOption arg0) {
 		// TODO Auto-generated method stub
 		if (DEBUG) System.err.println("getFieldNames");
-		return null;
+		return CouchIndexUtils.GetFieldNames(user, password, databaseUrl, indexPath);
 	}
 
 	@Override
