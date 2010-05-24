@@ -249,24 +249,27 @@ public class LuceneDoc implements JavaView {
 
 	@SuppressWarnings("unchecked")
 	public String findFieldString(String keyToFind, JSONObject obj) {
+		if (keyToFind == null || obj == null) return null;
+		if (keyToFind.contains(".")) {
+			String[] res = keyToFind.split("\\.", 2);
+			if (obj.has(res[0])) {
+				try {
+					return findFieldString(res[1], obj.getJSONObject(res[0]));
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					Log(e.getMessage());
+					return null;
+				}
+			} else {
+				return null;
+			}
+		}
 		if (obj.has(keyToFind)) {
 			try {
 				return obj.getString(keyToFind);
 			} catch (JSONException je) {
 				Log("Field " + keyToFind + " is not a string");
 				return null;
-			}
-		}
-		Iterator<String> keys = (Iterator<String>) obj.keys();
-		while (keys.hasNext()) {
-			String key = keys.next();
-			try {
-				JSONObject jo = obj.getJSONObject(key);
-				String out = findFieldString(keyToFind, jo);
-				if (out != null)
-					return out;
-			} catch (JSONException je) {
-				/* key not a JSONObject */
 			}
 		}
 		return null;

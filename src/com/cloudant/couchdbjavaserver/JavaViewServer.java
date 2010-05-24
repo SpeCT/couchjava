@@ -196,19 +196,33 @@ public class JavaViewServer extends ViewServer {
 	// load jar's view class
     @SuppressWarnings("unchecked")
 	private JavaView getClass(String classname, List<URL> libs) {
-    	if (libs == null || libs.size() == 0) {
-    		Log("Empty URL array for " + classname);
-    		return null;
-    	}
+// first get from urls
+    	if (libs != null && libs.size() > 0) {
+			try {
+//			Log("length of array: " + String.valueOf(libs.size()));
+				URLClassLoader loader = new URLClassLoader(libs.toArray(new URL[0]));
+				Class<JavaView> cl = (Class<JavaView>) loader.loadClass(classname);
+				Object o = cl.newInstance();
+				return (JavaView) o;
+			} catch (Exception e) {
+				Log(e.getMessage());
+//			System.exit(0);
+			}
+		}
     	try {
-//    		Log("length of array: " + String.valueOf(libs.size()));
-    		URLClassLoader loader = new URLClassLoader(libs.toArray(new URL[0]));
-    		Class<JavaView> cl = (Class<JavaView>) loader.loadClass(classname);
-    		Object o = cl.newInstance();
-    		return (JavaView) o;
-    	} catch (Exception e) {
-    		Log(e.getMessage());
-//    		System.exit(0);
+    		// see if class is preloaded
+    		Class <JavaView> cl = (Class<JavaView>) Class.forName(classname);
+    		Object o;
+			try {
+				o = cl.newInstance();
+				return (JavaView) o;
+			} catch (InstantiationException e) {
+    			Log(e.getMessage());
+			} catch (IllegalAccessException e) {
+    			Log(e.getMessage());
+			}
+    	} catch (ClassNotFoundException cnfe) {
+    		Log(cnfe.getMessage());
     	}
     	return null;
 	}
