@@ -129,6 +129,9 @@
   <copy todir="${env.CATALINA_HOME}/webapps/">
    <fileset file="${dist.dir}/${war.name.searchapp}" />
   </copy>
+  <copy todir="${env.JETTY_HOME}/webapps/">
+   <fileset file="${dist.dir}/${war.name.searchapp}" />
+  </copy>
   </target>
 
   <target name="jars" depends="server.jar, views.jar, search.jar"/>

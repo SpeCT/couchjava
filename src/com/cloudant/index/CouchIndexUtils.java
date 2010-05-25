@@ -32,23 +32,27 @@ public class CouchIndexUtils {
 	}
 	
 	public static String findFieldString(String keyToFind, JSONObject obj) {
-		if (obj.has(keyToFind)) {
-			try {
-				return obj.getString(keyToFind);
-			} catch (JSONException je){
-//				Log("Field " + keyToFind + " is not a string");
+		if (keyToFind == null || obj == null) return null;
+		if (keyToFind.contains(".")) {
+			String[] res = keyToFind.split("\\.", 2);
+			if (obj.has(res[0])) {
+				try {
+					return findFieldString(res[1], obj.getJSONObject(res[0]));
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+//					Log(e.getMessage());
+					return null;
+				}
+			} else {
 				return null;
 			}
 		}
-		Iterator<String> keys = (Iterator<String>)obj.keys();
-		while (keys.hasNext()) {
-			String key = keys.next();
+		if (obj.has(keyToFind)) {
 			try {
-				JSONObject jo = obj.getJSONObject(key);
-				String out = findFieldString(keyToFind, jo);
-				if (out != null) return out;
+				return obj.getString(keyToFind);
 			} catch (JSONException je) {
-				/* key not a JSONObject */
+//				Log("Field " + keyToFind + " is not a string");
+				return null;
 			}
 		}
 		return null;

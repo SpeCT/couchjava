@@ -11,6 +11,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.*;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.KeywordAnalyzer;
+import org.apache.lucene.analysis.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queryParser.ParseException;
@@ -86,7 +88,9 @@ public class Search extends HttpServlet implements Closeable {
 	    
 
 	    Searcher searcher = new IndexSearcher(reader);
-	    Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
+//	    Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
+	    PerFieldAnalyzerWrapper analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer(Version.LUCENE_CURRENT));
+	    analyzer.addAnalyzer("cloudant_range", new KeywordAnalyzer());
 	    Sort sorter = null;
 	    if (sortField !=  null) {
 	    	sorter = new Sort(new SortField(sortField, SortField.LONG));
@@ -100,6 +104,7 @@ public class Search extends HttpServlet implements Closeable {
 //		    analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);	    	
 //	    }
 	    QueryParser parser = new QueryParser(Version.LUCENE_CURRENT, field, analyzer);
+	    parser.setDefaultOperator(QueryParser.AND_OPERATOR);
 	    Query luceneQuery = null;
 	    try {
 	    	luceneQuery = parser.parse(query);
