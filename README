@@ -18,7 +18,7 @@ java = {showroom_ejje_server, start_link, ['ejje@localhost', "com.cloudant.couch
 
 2) Start the JVM 'node' with the view server code
 
-$ java -cp ./dist/couchdb-java-viewserver.jar com.cloudant.ejje.Ejje ejje@localhost cookiename
+$ java -Djava.security.manager -Djava.security.policy=policy.txt -cp ./dist/couchdb-java-viewserver.jar com.cloudant.ejje.Ejje ejje@localhost cookiename
 
 Where you may need to modify the path of the jar, and the name/cookie for the node.  Be sure to match the node name 'ejje@localhost' in both .ini and launch command.
 
