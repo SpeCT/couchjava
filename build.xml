@@ -5,7 +5,7 @@
   <!-- settable properties -->
   <property file="build.properties"/>
   <property name="project.home" value="."/>
-  <property name="jar.name.server" value="couchdb-java-viewserver.jar"/>
+  <property name="jar.name.server" value="ellison.jar"/>
   <property name="jar.name.views" value="javaviews.jar"/>  
   <property name="jar.name.search" value="searchcouch.jar"/>
   <property name="war.name.searchapp" value="searchserver.war"/>
@@ -29,7 +29,7 @@
     <fileset dir="${web.dir}/WEB-INF/lib">
       <include name="**/*.jar"/>
     </fileset>
-    <fileset dir="${env.CATALINA_HOME}/lib">
+    <fileset dir="${env.JETTY_HOME}/lib">
       <include name="**/*.jar"/>
     </fileset>
   </path>
