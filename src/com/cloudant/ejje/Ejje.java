@@ -43,7 +43,16 @@ public class Ejje {
     	boolean running = true;
     	
         try {
-            OtpNode node = new OtpNode(args[0], args[1]);
+        	
+            OtpNode node = null;
+        	if (args.length == 1) {
+        		node = new OtpNode(args[0]);
+        	} else if (args.length == 2) {
+        		node = new OtpNode(args[0], args[1]);      		
+        	} else {
+        		System.out.println("com.cloudant.ejje.Ejje args: <nodename> <cookie>(optional)");
+        		System.exit(0);
+        	}
             OtpMbox mbox = node.createMbox("ejje_main");
 
             OtpErlangObject o;
