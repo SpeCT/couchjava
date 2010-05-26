@@ -40,7 +40,8 @@ public class Search extends HttpServlet implements Closeable {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String field = "*";
 //		response.setContentType("application/json;charset=utf-8");
-//		Cookie[] cookies = request.getCookies(); 
+		Cookie[] cookies = request.getCookies(); 
+		String authorization = request.getHeader("Authorization");
 		PrintWriter out = new PrintWriter(System.out);
 		out = response.getWriter();
 		JSONObject jout = new JSONObject();
@@ -75,7 +76,7 @@ public class Search extends HttpServlet implements Closeable {
 //		String urlString = request.getParameter("url");
 		try {
 		if (urlString == null) {
-		urlString = "http://ec2-174-129-116-148.compute-1.amazonaws.com:5984/twitter/";
+			urlString = "http://ec2-174-129-116-148.compute-1.amazonaws.com:5984/twitter/";
 //			urlString = "http://localhost:5984/twitter/";
 			// comment out for testing
 //			jout.put("error", "need to specify index url as parameter");
@@ -98,7 +99,14 @@ public class Search extends HttpServlet implements Closeable {
 		 */
 		String user = getServletContext().getInitParameter("dbcoreuser");
 		String password = getServletContext().getInitParameter("dbcorepassword");
-	    IndexReader reader = CouchdbIndexReader.open(urlString, user, password);
+		IndexReader reader = null;
+		if (cookies != null) {
+			reader = CouchdbIndexReader.open(urlString, cookies);
+		} else if (authorization != null) {
+			reader = CouchdbIndexReader.open(urlString, authorization);
+		} else {
+			reader = CouchdbIndexReader.open(urlString);
+		}
 //	    System.err.println(user + " " + password);
 //		IndexReader reader = CouchdbIndexReader.open(urlString);
 	    
@@ -135,7 +143,7 @@ public class Search extends HttpServlet implements Closeable {
 	    ScoreDoc[] hits = null;
 	    int numTotalHits = 0;
 	    if (sorter == null) {
-	    	int maxToFetch = (urlString.contains("twitter") ? 10000 : end);
+	    	int maxToFetch = end;
 	    	TopScoreDocCollector collector = TopScoreDocCollector.create(
 			          maxToFetch, false);
 	    	searcher.search(luceneQuery, collector);
@@ -145,6 +153,12 @@ public class Search extends HttpServlet implements Closeable {
 	    	TopFieldDocs docs = searcher.search(luceneQuery, null, end, sorter);
 	    	hits = docs.scoreDocs;
 	    	numTotalHits = docs.totalHits;
+	    }
+	    int status = ((CouchdbIndexReader)reader).getHttpResponse();
+	    System.err.println("reader http response:" + status);
+	    if (status != 200) {
+	    	response.sendError(status);
+	    	return;
 	    }
 	    long totalTime = System.currentTimeMillis() - starttime;
 	      
@@ -166,7 +180,8 @@ public class Search extends HttpServlet implements Closeable {
 	    		jsonArr.put(err);
 	    	}
 	    }
-	    if (urlString.contains("twitter")) {
+	    boolean sortById = false;
+	    if (sortById) {
 	    	List<String> results = new ArrayList<String>();
 	    	for (int i = 0; i<jsonArr.length(); i++) {
 	    		results.add(jsonArr.getString(i));

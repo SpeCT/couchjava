@@ -12,6 +12,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.lucene.index.Term;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,6 +30,12 @@ public class CouchIndexUtils {
 			return new JSONObject(input);
 		} catch	(JSONException je) {
 			System.out.println(je.getMessage());
+			try {
+				return new JSONObject().put("error", "GetDocument").put("Http Response", 406);
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			return null;
 		}
 	}
@@ -85,13 +94,13 @@ public class CouchIndexUtils {
 		return map;
 	}
 	
-	public static JSONArray GetTermData(String user, String pass, String baseUrl, String indexUrl, Term term) {
+	public static JSONArray GetTermData(Credentials creds, String baseUrl, String indexUrl, Term term) {
 		String termText = term.text();
 		String field = term.field();
 		if (field.equals("cloudant_range")) {
 			String[] s = termText.split(",");
 			if (s == null || s.length != 3) return null;
-			return GetRangeData(user, pass, baseUrl, indexUrl, s[0], s[1], s[2]);
+			return GetRangeData(creds, baseUrl, indexUrl, s[0], s[1], s[2]);
 		}
 		JSONArray termKey = new JSONArray().put(field).put(termText);
 		//re-implement later
@@ -101,7 +110,7 @@ public class CouchIndexUtils {
 //		if (all) {
 //			url = baseUrl + indexUrl + "?stale=ok&startkey=[\"" + termText + "\"]&endkey=[\"" + termText + "\",{}]&inclusive_end=true";
 //		}
-		JSONObject jobj = GetJSONDocument(user, pass, url);
+		JSONObject jobj = GetJSONDocument(creds, url);
 //		System.err.println("Url: " + url);
 //		System.err.println("results: " + jobj.toString());
 		JSONArray outArray = new JSONArray();
@@ -133,7 +142,7 @@ public class CouchIndexUtils {
 		return outArray;
 	}
 
-	public static int GetDocFreq(String user, String pass, String baseUrl, String indexUrl, Term term) {
+	public static int GetDocFreq(Credentials creds, String baseUrl, String indexUrl, Term term) {
 		String termText = term.text();
 		String field = term.field();
 		JSONArray termKey = new JSONArray().put(field).put(termText);
@@ -143,7 +152,7 @@ public class CouchIndexUtils {
 //		if (all) {
 //			url = baseUrl + indexUrl + "?stale=ok&startkey=[\"" + termText + "\"]&endkey=[\"" + termText + "\",{}]&inclusive_end=true";
 //		}
-		JSONObject jobj = GetJSONDocument(user, pass, url);
+		JSONObject jobj = GetJSONDocument(creds, url);
 //		System.err.println("Url: " + url);
 //		System.err.println("results: " + jobj.toString());
 		JSONArray outArray = new JSONArray();
@@ -165,10 +174,10 @@ public class CouchIndexUtils {
 		}
 	}
 
-	public static List<String> GetFieldNames(String user, String pass, String baseUrl, String indexUrl) {
+	public static List<String> GetFieldNames(Credentials cred, String baseUrl, String indexUrl) {
 		String url = baseUrl + indexUrl + "?stale=ok&group=true&group_level=1";
 		List<String> fields = new ArrayList<String>();
-		JSONObject jobj = GetJSONDocument(user, pass, url);
+		JSONObject jobj = GetJSONDocument(cred, url);
 //		System.err.println("Url: " + url);
 //		System.err.println("results: " + jobj.toString());
 		try {
@@ -192,14 +201,17 @@ public class CouchIndexUtils {
 		return fields;
 	}
 
+	public static JSONArray GetRangeData(String user, String password, String baseUrl, String indexUrl, String field, String lowterm, String highterm) {
+		return  GetRangeData(new Credentials(user, password, null, null), baseUrl, indexUrl, field, lowterm, highterm);
+
+	}	
 	
-	
-	public static JSONArray GetRangeData(String user, String pass, String baseUrl, String indexUrl, String field, String lowterm, String highterm) {
+	public static JSONArray GetRangeData(Credentials creds, String baseUrl, String indexUrl, String field, String lowterm, String highterm) {
 		if (field == null || lowterm == null || highterm == null) return null;
 		JSONArray termKey = new JSONArray().put(field).put(lowterm);
 		JSONArray endKey = new JSONArray().put(field).put(highterm);
 		String url = baseUrl + indexUrl + "?stale=ok&reduce=false&startkey=" + termKey.toString() + "&endkey=" + endKey.toString() + "&inclusive_end=true";
-		JSONObject jobj = GetJSONDocument(user, pass, url);
+		JSONObject jobj = GetJSONDocument(creds, url);
 //		System.err.println("Url: " + url);
 //		System.err.println("results: " + jobj.toString());
 		JSONArray outArray = new JSONArray();
@@ -233,9 +245,12 @@ public class CouchIndexUtils {
 		return outArray;
 	}
 	public static JSONArray GetSortData(String user, String pass, String baseUrl, String indexUrl, String field) {
+		return GetSortData(new Credentials(user, pass, null, null), baseUrl, indexUrl, field);
+	}
+	public static JSONArray GetSortData(Credentials creds, String baseUrl, String indexUrl, String field) {
 //		String url = baseUrl + indexUrl + "?stale=ok&group=true&key=\"" + termText + "\"";
 		String url = baseUrl + indexUrl + "?stale=ok&group=true&group_level=2&startkey=[\"" + field + "\"]&endkey=[\"" + field + "\",{}]&inclusive_end=true";
-		JSONObject jobj = GetJSONDocument(user, pass, url);
+		JSONObject jobj = GetJSONDocument(creds, url);
 		if (DEBUG) System.err.println("Url: " + url);
 		int maxToDisplay = Math.min(jobj.length(), 500); 
 		if (DEBUG) System.err.println("results: " + jobj.toString().substring(0,maxToDisplay));
@@ -254,39 +269,73 @@ public class CouchIndexUtils {
 		return outArray;
 	}
 	
-	public static JSONObject GetJSONDocument(String user, String pass, String url) {
+	public static JSONObject GetJSONDocument(Credentials creds, String url) {
 //		System.err.println("Getting " + url);
-		return ConvertStringToJSON(GetDocument(user,pass,url));
+		return ConvertStringToJSON(GetDocument(creds,url));
 	}
 	
 	public static String GetDocument(String user, String pass, String url) {
-		try {
+		return GetDocument(new Credentials(user, pass, null, null), url);
+	}
+	
+	public static String GetDocument(Credentials creds, String url) {
 		if (url == null) return null;
 		String fullUrl = url;
 
 //		System.out.println(fullUrl);
+        try {	
 		URL Url = new URL(fullUrl);
 //		URL Url = new URL(tUrl.getProtocol(),tUrl.getHost(),URLEncoder.encode(tUrl.getPath(),"UTF-8"));
 		HttpURLConnection conn = (HttpURLConnection)Url.openConnection(); 
 		conn.setDoOutput(true);
 		conn.setRequestMethod("GET");
 		conn.setRequestProperty("Content-Type", "text/plain");
-		if (user != null && pass != null) {
-			conn.setRequestProperty("Authorization", userNamePasswordBase64(user,pass));
+		if (creds.getUser() != null && creds.getPassword() != null) {
+			conn.setRequestProperty("Authorization", userNamePasswordBase64(creds.getUser(), creds.getPassword()));
+		} else if (creds.getAuthorization() != null) {
+			conn.setRequestProperty("Authorization", creds.getAuthorization());
+		} else if (creds.getDbCoreCookie() != null) {
+			Cookie[] cook = creds.getDbCoreCookie();
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < cook.length; i++) {
+				sb.append(cook[i].getName() + "=" + cook[i].getValue());
+				if (i < cook.length -1) sb.append(",");
+			}
+			conn.setRequestProperty("Cookie", sb.toString());
 		}
 		// Get the response 
-		BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream())); 
-		String line;
-		StringBuilder sb = new StringBuilder();
-		while ((line = rd.readLine()) != null) { 
-			sb.append(line);
-		} 
-		rd.close();
-		return sb.toString();
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-			return "Error with read";
-		}
+		try {
+				conn.connect();
+				if (conn.getResponseCode() != HttpServletResponse.SC_OK) {
+					return new JSONObject().put("error", "GetDocument").put("Http Response", conn.getResponseCode()).put("url", url).toString();
+				}
+				BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream())); 
+				String line;
+				StringBuilder sb = new StringBuilder();
+				while ((line = rd.readLine()) != null) { 
+					sb.append(line);
+				} 
+				rd.close();
+				return sb.toString();
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+				try {
+					return new JSONObject().put("error", "GetDocument").put("Http Response", 500).put("url", url).toString();
+				} catch (Exception e1) {
+					e1.printStackTrace();
+					return null;
+				}
+			}
+        } catch (Exception e3) {
+        	e3.printStackTrace();
+			try {
+				return new JSONObject().put("error", "GetDocument").put("Http Response", 500).put("url", url).toString();
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}        	
+        }
 	}
 	public static String PostDocument(String user, String pass, String url, String id, JSONObject document) {
 		try {

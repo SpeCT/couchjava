@@ -20,6 +20,8 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import javax.servlet.http.Cookie;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -46,15 +48,27 @@ public class CouchdbIndexReader extends IndexReader {
 	
 	private static boolean cache = false;
 	private String databaseUrl;
-	private String user;
-	private String password;
+//	private String user = null;
+//	private String password = null;
 	private String indexPath = "_design/lucene/_view/index";
 	private DocIdMap dmap;
 	static boolean DEBUG = false;
 	private Map<Term, Map<Integer, List<Integer>>> data = null;
 	// mapping of <field, term> pairs
 	private Map<String, TreeMap<Object, Integer>> termData = null;
+//	private Cookie[] dbCoreCookie = null;
+//	private String authorization = null;
+	private Credentials credentials;
+	private int httpResponse = 200;
 	
+	public Credentials getCredentials() {
+		return credentials;
+	}
+
+	public void setCredentials(Credentials credentials) {
+		this.credentials = credentials;
+	}
+
 	public static IndexReader open(String url) throws IOException {
 		return new CouchdbIndexReader(url, null, null);
 	}
@@ -63,7 +77,31 @@ public class CouchdbIndexReader extends IndexReader {
 		return new CouchdbIndexReader(url, user, password);
 	}
 	
+	public static IndexReader open(String url, String authorization) throws IOException {
+		return new CouchdbIndexReader(url, authorization);
+	}
+	
+	public static IndexReader open(String url, Cookie[] cookies) throws IOException {
+		return new CouchdbIndexReader(url, cookies);
+	}
+	
 	public CouchdbIndexReader(String url, String user, String password) throws IOException {
+		this(url);
+		credentials.setUser(user);
+		credentials.setPassword(password);
+	}
+
+	public CouchdbIndexReader(String url, String auth) throws IOException {
+		this(url);
+		credentials.setAuthorization(auth);
+	}
+
+	public CouchdbIndexReader(String url, Cookie[] cook) throws IOException {
+		this(url);
+		((Credentials) credentials).setDbCoreCookie(cook);
+	}
+
+	public CouchdbIndexReader(String url) throws IOException {
 		if (url == null) throw new IOException("Must provide url for CouchDbIndexReader");
 		databaseUrl = url + (url.endsWith("/") ? "" : "/");
 		try {
@@ -71,13 +109,12 @@ public class CouchdbIndexReader extends IndexReader {
 		} catch (MalformedURLException e) {
 			throw new IOException("invalid url for CouchDbIndexReader: " + url);
 		}
-		this.user = user;
-		this.password = password;
 		dmap = new DocIdMap();
 		data = new HashMap<Term, Map<Integer, List<Integer>>>();
 		termData = new HashMap<String, TreeMap<Object, Integer>>();
+		credentials = new Credentials(null, null, null, null);
 	}
-
+	
 	public int getLuceneId(String couchid) {
 		return dmap.getLuceneId(couchid);
 	}
@@ -123,7 +160,7 @@ public class CouchdbIndexReader extends IndexReader {
 	public int docFreq(Term arg0) throws IOException {
 		// This is only true for non wild card terms. Fix for wild card.
 		if (DEBUG) System.err.println("docFreq");
-		return CouchIndexUtils.GetDocFreq(user, password, databaseUrl, indexPath, arg0);
+		return CouchIndexUtils.GetDocFreq(credentials, databaseUrl, indexPath, arg0);
 	}
 
 	@Override
@@ -134,7 +171,7 @@ public class CouchdbIndexReader extends IndexReader {
 //			if (DEBUG) System.err.println("lucene id: " + arg0);
 			String couchId = getCouchId(arg0);
 //			if (DEBUG) System.err.println("Get Doc Couch Id: " + couchId + " lucene id: " + arg0);
-			JSONObject jdoc = CouchIndexUtils.GetJSONDocument(user,password,databaseUrl+couchId);
+			JSONObject jdoc = CouchIndexUtils.GetJSONDocument(credentials, databaseUrl+couchId);
 			if (jdoc == null) return null;
 			Document doc = new Document();
 			Map<String, String> map = CouchIndexUtils.MapJSONObject(jdoc,"");
@@ -153,7 +190,7 @@ public class CouchdbIndexReader extends IndexReader {
 	public Collection<String> getFieldNames(FieldOption arg0) {
 		// TODO Auto-generated method stub
 		if (DEBUG) System.err.println("getFieldNames");
-		return CouchIndexUtils.GetFieldNames(user, password, databaseUrl, indexPath);
+		return CouchIndexUtils.GetFieldNames(credentials, databaseUrl, indexPath);
 	}
 
 	@Override
@@ -226,8 +263,17 @@ public class CouchdbIndexReader extends IndexReader {
 	@Override
 	public int numDocs() {
 		// TODO Auto-generated method stub
-		String summary = CouchIndexUtils.GetDocument(user, password, databaseUrl);
+		String summary = CouchIndexUtils.GetDocument(credentials, databaseUrl);
 		JSONObject jobj = CouchIndexUtils.ConvertStringToJSON(summary);
+		if (jobj.has("error")) {
+			if(jobj.has("Http Response")) {
+				try {
+					setHttpResponse(jobj.getInt("Http Response"));
+				} catch (JSONException je) {
+					setHttpResponse(500);
+				}
+			}
+		}
 		try {
 			final int num = jobj.getInt("doc_count");
 			if (DEBUG) System.err.println("numDocs: " + num);
@@ -258,7 +304,7 @@ public class CouchdbIndexReader extends IndexReader {
         	  if (cache && data != null && data.containsKey(term)) {
         		  // cached
         	  } else { 
-        		  JSONArray arr = CouchIndexUtils.GetTermData(user, password, databaseUrl, indexPath, term);        	  
+        		  JSONArray arr = CouchIndexUtils.GetTermData(credentials, databaseUrl, indexPath, term);        	  
 //        		  System.out.println("Term Data for " + term.toString() + " " + arr.toString());
         		  
         		  if (arr != null) {
@@ -412,7 +458,7 @@ public class CouchdbIndexReader extends IndexReader {
 //        if (!termData.containsKey(arg0.field())) {
 // this is baffling why the above does not work
         if (true) {
-        	JSONArray jarr = CouchIndexUtils.GetSortData(user, password, databaseUrl, indexPath, arg0.field());
+        	JSONArray jarr = CouchIndexUtils.GetSortData(credentials, databaseUrl, indexPath, arg0.field());
         	TreeMap<Object, Integer> arr = new TreeMap<Object, Integer>();
         	if (DEBUG) System.out.println("length of sort data: " + jarr.length());
         	String lastField = arg0.field();
@@ -553,7 +599,7 @@ public class CouchdbIndexReader extends IndexReader {
 			if (designDoc == null || designDoc.length == 0) return null;
 			String designDocUrl = databaseUrl + designDoc[0];
 			if (DEBUG) System.err.println(designDocUrl);
-			JSONObject jobj = CouchIndexUtils.GetJSONDocument(user, password, designDocUrl);
+			JSONObject jobj = CouchIndexUtils.GetJSONDocument(credentials, designDocUrl);
 			if (jobj == null) {
 				throw new FileNotFoundException("Cannot find design doc");
 			}
@@ -602,5 +648,15 @@ public class CouchdbIndexReader extends IndexReader {
 			}
 			
 		}
+
+		public void setHttpResponse(int httpResponse) {
+			this.httpResponse = httpResponse;
+		}
+
+		public int getHttpResponse() {
+			return httpResponse;
+		}
+
+
 
 }
