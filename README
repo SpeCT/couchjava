@@ -3,7 +3,7 @@ couchdb-java-viewserver is a java language view server for couchdb.
 To compile:
 
 1) Do "ant server.jar"
-2) This creates a runnable jar file in the dist directory, dist/couchdb-java-viewserver.jar.
+2) This creates a runnable jar file in the dist directory, dist/ellison.jar.
 
 Get the patch couchdb and compile:
 
@@ -13,14 +13,17 @@ To attach to couchdb:
 
 1) Add the following lines to your couchdb local.ini file:
 
+Get HOSTNAME using "hostname -f" command
+
+
 [native_query_servers]
-java = {showroom_ejje_server, start_link, ['ejje@localhost', "com.cloudant.couchdbjavaserver.JavaViewServer"]}
+java = {showroom_ejje_server, start_link, ['ejje@HOSTNAME', "com.cloudant.couchdbjavaserver.JavaViewServer"]}
 
 2) Start the JVM 'node' with the view server code
 
-$ java -Djava.security.manager -Djava.security.policy=policy.txt -cp ./dist/couchdb-java-viewserver.jar com.cloudant.ejje.Ejje ejje@localhost cookiename
+$ java -Djava.security.manager -Djava.security.policy=policy.txt -cp ./dist/ellison.jar com.cloudant.ejje.Ejje ejje@`hostname -f` cookiename
 
-Where you may need to modify the path of the jar, and the name/cookie for the node.  Be sure to match the node name 'ejje@localhost' in both .ini and launch command.
+Where you may need to modify the path of the jar, and the name/cookie for the node.  Be sure to match the node name 'ejje@HOSTNAME' in both .ini and launch command.  If you don't specify the cookiename in the java start command, it will default to the erlang default cookie.
 
 
 Implementing a view:

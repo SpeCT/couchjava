@@ -80,12 +80,47 @@ public class CouchIndexUtils {
 				} else if (o instanceof Number) {
 					map.put(name, String.valueOf(o));
 				} else if (o instanceof JSONArray) {
-					map.put(name, ((JSONArray)o).toString());
-				} else if (o instanceof JSONObject) {
-					Map<String, String> next = MapJSONObject((JSONObject)o, name + ".");
+					Map<String, String> next = MapJSONArray((JSONArray)o, name);
 					map.putAll(next);
+				} else if (o instanceof JSONObject) {
+					if ((JSONObject)o == JSONObject.NULL) {
+						map.put(name, JSONObject.NULL.toString());
+					} else {
+						Map<String, String> next = MapJSONObject((JSONObject)o, name + ".");
+						map.putAll(next);
+					}
 				} else if (o instanceof Boolean) {
-					map.put(key, ((Boolean)o).toString());
+					map.put(name, ((Boolean)o).toString());
+				} 
+			} catch (JSONException je) {
+				System.out.println(je.getMessage());
+			}
+		}
+		return map;
+	}
+	public static Map<String, String> MapJSONArray(JSONArray jarr, String prefix) {
+		if (jarr == null) return null;
+		Map<String, String> map = new HashMap<String, String>();
+		for (int i = 0; i < jarr.length(); i++) {
+			String name = (prefix != null ? prefix : "");
+			try {
+			Object o = jarr.get(i);
+				if (o instanceof String) {
+					map.put(name, (String)o);
+				} else if (o instanceof Number) {
+					map.put(name, String.valueOf(o));
+				} else if (o instanceof JSONArray) {
+					Map<String, String> next = MapJSONArray((JSONArray)o, name);
+					map.putAll(next);
+				} else if (o instanceof JSONObject) {
+					if ((JSONObject)o == JSONObject.NULL) {
+						map.put(name, JSONObject.NULL.toString());
+					} else {
+						Map<String, String> next = MapJSONObject((JSONObject)o, name + ".");
+						map.putAll(next);
+					}
+				} else if (o instanceof Boolean) {
+					map.put(name, ((Boolean)o).toString());
 				}
 			} catch (JSONException je) {
 				System.out.println(je.getMessage());
