@@ -34,6 +34,7 @@ public class LuceneDoc implements JavaView {
 	}
 
 	public JSONArray MapDoc(JSONObject doc) {
+//		System.out.println(doc.toString());
 		JSONArray out = new JSONArray();
 		String id = null;
 		try {
@@ -49,18 +50,30 @@ public class LuceneDoc implements JavaView {
 			// user specified field set
 			if (fieldsToStore != null) {
 				for (String field : fieldsToStore.keySet()) {
-					String text = findFieldString(field, doc);
-					if (field != null && text != null) {
-						index.addField(field, text, analyzer, fieldsToStore.get(field));
+					Object o = findFieldString(field, doc);
+					if (field != null && o != null) {
+						if (o instanceof String) {
+							index.addField(field, (String)o, analyzer, fieldsToStore.get(field));
+						} else {
+							index.addField(field, o, fieldsToStore.get(field));
+						}
 					}
 				}
 			} else {
 				//index everything 
-				Map<String, String> mapped = CouchIndexUtils.MapJSONObject(doc, null);
+				Map<String, Object> mapped = CouchIndexUtils.MapJSONObject2Object(doc, null);
+				if (mapped == null) {
+					Log("can't map json doc");
+					return out.put(new JSONArray());
+				}
 				for (String field : mapped.keySet()) {
-					String text = mapped.get(field);
-					if (field != null && text != null) {
-						index.addField(field, text, analyzer, 1.0f);
+					Object o = mapped.get(field);
+					if (field != null && o != null) {
+						if (o instanceof String) {
+							index.addField(field, (String)o, analyzer, 1.0f);
+						} else {
+							index.addField(field, o, 1.0f);
+						}
 					}
 				}
 			}
@@ -71,7 +84,7 @@ public class LuceneDoc implements JavaView {
 		} catch (Exception e) {
 			out.put(new JSONArray());
 			if (e != null ) {
-				Log("Exception: " + e.toString());
+				Log("Map Exception: " + e.toString());
 			}
 		}
 		return out;

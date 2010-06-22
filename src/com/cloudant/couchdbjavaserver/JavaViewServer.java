@@ -78,7 +78,7 @@ public class JavaViewServer extends ViewServer {
 						String config = jobj.getString("configure");
 						view.Configure(config);
 					} catch (JSONException je) {
-						Log(name + " has no configure string");
+//						Log(name + " has no configure string");
 						/* no configuration field */
 					}
 					if( views.add(view) ) {
@@ -96,7 +96,7 @@ public class JavaViewServer extends ViewServer {
 				for (JavaView view : views) {
 					ret.put(view.MapDoc(jsondoc));
 				}
-//				Log(ret.toString());
+				Log(ret.toString());
 				return ret.toString();
 			case REDUCE:
 				try {

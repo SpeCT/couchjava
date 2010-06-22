@@ -76,8 +76,8 @@ public class Search extends HttpServlet implements Closeable {
 //		String urlString = request.getParameter("url");
 		try {
 		if (urlString == null) {
-			urlString = "http://ec2-174-129-116-148.compute-1.amazonaws.com:5984/twitter/";
-//			urlString = "http://localhost:5984/twitter/";
+//			urlString = "http://ec2-174-129-116-148.compute-1.amazonaws.com:5984/twitter/";
+			urlString = "http://localhost:5984/twitter/";
 			// comment out for testing
 //			jout.put("error", "need to specify index url as parameter");
 //			out.println(jout.toString());
@@ -155,7 +155,7 @@ public class Search extends HttpServlet implements Closeable {
 	    	numTotalHits = docs.totalHits;
 	    }
 	    int status = ((CouchdbIndexReader)reader).getHttpResponse();
-	    System.err.println("reader http response:" + status);
+//	    System.err.println("reader http response:" + status);
 	    if (status != 200) {
 	    	response.sendError(status);
 	    	return;
@@ -165,7 +165,8 @@ public class Search extends HttpServlet implements Closeable {
 //	    System.out.println("number of hits = " + numTotalHits);
 	    jout.put("matching_docs", numTotalHits);
 	    jout.put("time", totalTime);
-	        
+	    jout.put("query",luceneQuery.toString());
+	    
 //	        long time = System.currentTimeMillis() - starttime;
 	        
 	    JSONArray jsonArr = new JSONArray();

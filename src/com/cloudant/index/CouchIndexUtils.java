@@ -22,7 +22,7 @@ import org.json.JSONObject;
 
 public class CouchIndexUtils {
 	
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
 	
 	public static JSONObject ConvertStringToJSON(String input) {
 		if (input==null) return null;
@@ -128,16 +128,79 @@ public class CouchIndexUtils {
 		}
 		return map;
 	}
+	public static Map<String, Object> MapJSONObject2Object(JSONObject jobj, String prefix) {
+		if (jobj == null) return null;
+		Iterator<String> keys = (Iterator<String>)jobj.keys();
+		Map<String, Object> map = new HashMap<String, Object>();
+		while (keys.hasNext()) {
+			String key = keys.next();
+			String name = (prefix != null ? prefix : "") + key;
+			try {
+			Object o = jobj.get(key);
+				if (o instanceof String) {
+					map.put(name, o);
+				} else if (o instanceof Number) {
+					map.put(name, o);
+				} else if (o instanceof JSONArray) {
+					Map<String, Object> next = MapJSONArray2Object((JSONArray)o, name);
+					map.putAll(next);
+				} else if (o instanceof JSONObject) {
+					if ((JSONObject)o == JSONObject.NULL) {
+						map.put(name, JSONObject.NULL.toString());
+					} else {
+						Map<String, Object> next = MapJSONObject2Object((JSONObject)o, name + ".");
+						map.putAll(next);
+					}
+				} else if (o instanceof Boolean) {
+					map.put(name, ((Boolean)o).toString());
+				} 
+			} catch (JSONException je) {
+				System.out.println(je.getMessage());
+			}
+		}
+		return map;
+	}
+	public static Map<String, Object> MapJSONArray2Object(JSONArray jarr, String prefix) {
+		if (jarr == null) return null;
+		Map<String, Object> map = new HashMap<String, Object>();
+		for (int i = 0; i < jarr.length(); i++) {
+			String name = (prefix != null ? prefix : "");
+			try {
+			Object o = jarr.get(i);
+				if (o instanceof String) {
+					map.put(name, o);
+				} else if (o instanceof Number) {
+					map.put(name, o);
+				} else if (o instanceof JSONArray) {
+					Map<String, Object> next = MapJSONArray2Object((JSONArray)o, name);
+					map.putAll(next);
+				} else if (o instanceof JSONObject) {
+					if ((JSONObject)o == JSONObject.NULL) {
+						map.put(name, JSONObject.NULL.toString());
+					} else {
+						Map<String, Object> next = MapJSONObject2Object((JSONObject)o, name + ".");
+						map.putAll(next);
+					}
+				} else if (o instanceof Boolean) {
+					map.put(name, ((Boolean)o).toString());
+				}
+			} catch (JSONException je) {
+				System.out.println(je.getMessage());
+			}
+		}
+		return map;
+	}
 	
 	public static JSONArray GetTermData(Credentials creds, String baseUrl, String indexUrl, Term term) {
 		String termText = term.text();
 		String field = term.field();
+//		System.err.println(field + " " + termText);
 		if (field.equals("cloudant_range")) {
 			String[] s = termText.split(",");
 			if (s == null || s.length != 3) return null;
 			return GetRangeData(creds, baseUrl, indexUrl, s[0], s[1], s[2]);
 		}
-		JSONArray termKey = new JSONArray().put(field).put(termText);
+		JSONArray termKey = GetTermKey(field, termText);
 		//re-implement later
 		//		boolean all = field.equals("*");
 //		String url = baseUrl + indexUrl + "?stale=ok&key=\"" + termText + "\"";
@@ -159,13 +222,27 @@ public class CouchIndexUtils {
 					JSONArray values = row.getJSONArray("value");
 //			System.out.println("values: " + values.toString());
 					if (values != null) {
+						JSONObject vout = new JSONObject();
 						for (int i=0;i<values.length();i++) {
+							// first item should be json array with positions:
+							if (i == 0) {
+								try {
+									JSONArray arr = values.getJSONArray(i);
+									vout.put("p", arr);
+									continue;
+								} catch (JSONException je) {
+									// old format continue
+								}
+							}
 							JSONObject v = values.getJSONObject(i);
-//							if (all || v.getString("field").equals(field)) {
-								v.put("_id", id);
-								outArray.put(v);
-//							}
+							Iterator<String> keys = v.keys();
+							while (keys.hasNext()) {
+								String key = keys.next();
+								vout.put(key, v.get(key));
+							}
 						}
+						vout.put("_id", id);
+						outArray.put(vout);
 					}
 				} catch (JSONException je) {
 					/* no values in this row */
@@ -180,7 +257,7 @@ public class CouchIndexUtils {
 	public static int GetDocFreq(Credentials creds, String baseUrl, String indexUrl, Term term) {
 		String termText = term.text();
 		String field = term.field();
-		JSONArray termKey = new JSONArray().put(field).put(termText);
+		JSONArray termKey = GetTermKey(field,termText);
 		//re-implement later
 		//		boolean all = field.equals("*");
 		String url = baseUrl + indexUrl + "?stale=ok&group=true&group_level=2&key=" + termKey.toString();
@@ -239,12 +316,19 @@ public class CouchIndexUtils {
 	public static JSONArray GetRangeData(String user, String password, String baseUrl, String indexUrl, String field, String lowterm, String highterm) {
 		return  GetRangeData(new Credentials(user, password, null, null), baseUrl, indexUrl, field, lowterm, highterm);
 
-	}	
+	}
+	public static JSONArray GetTermKey(String field, String termText) {
+		if (termText.endsWith("/n")) {
+			return new JSONArray().put(field).put(JSONObject.stringToValue(termText.substring(0,termText.length()-2)));
+		} else {
+			return new JSONArray().put(field).put(termText);
+		}	
+	}
 	
 	public static JSONArray GetRangeData(Credentials creds, String baseUrl, String indexUrl, String field, String lowterm, String highterm) {
 		if (field == null || lowterm == null || highterm == null) return null;
-		JSONArray termKey = new JSONArray().put(field).put(lowterm);
-		JSONArray endKey = new JSONArray().put(field).put(highterm);
+		JSONArray termKey = GetTermKey(field, lowterm);
+		JSONArray endKey = GetTermKey(field, highterm);
 		String url = baseUrl + indexUrl + "?stale=ok&reduce=false&startkey=" + termKey.toString() + "&endkey=" + endKey.toString() + "&inclusive_end=true";
 		JSONObject jobj = GetJSONDocument(creds, url);
 //		System.err.println("Url: " + url);
@@ -262,13 +346,27 @@ public class CouchIndexUtils {
 					JSONArray values = row.getJSONArray("value");
 //			System.out.println("values: " + values.toString());
 					if (values != null) {
+						JSONObject vout = new JSONObject();
 						for (int i=0;i<values.length();i++) {
+							// first item should be json array with positions:
+							if (i == 0) {
+								try {
+									JSONArray arr = values.getJSONArray(i);
+									vout.put("p", arr);
+									continue;
+								} catch (JSONException je) {
+									// old format continue
+								}
+							}
 							JSONObject v = values.getJSONObject(i);
-//							if (all || v.getString("field").equals(field)) {
-								v.put("_id", id);
-								outArray.put(v);
-//							}
+							Iterator<String> keys = v.keys();
+							while (keys.hasNext()) {
+								String thisKey = keys.next();
+								vout.put(thisKey, v.get(thisKey));
+							}
 						}
+						vout.put("_id", id);
+						outArray.put(vout);
 					}
 				} catch (JSONException je) {
 					/* no values in this row */

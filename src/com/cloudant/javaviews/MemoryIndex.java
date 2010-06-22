@@ -180,11 +180,15 @@ import org.json.JSONObject;
  */
 public class MemoryIndex implements Serializable {
 
-  /** info for each field: Map<String fieldName, Info field> */
-  private final HashMap<String,Info> fields = new HashMap<String,Info>();
-  
-  /** fields sorted ascending by fieldName; lazily computed on demand */
-  private transient Map.Entry<String,Info>[] sortedFields; 
+	  /** info for each field: Map<String fieldName, Info field> */
+	  private final HashMap<String,Info> fields = new HashMap<String,Info>();
+	  
+	  /** fields sorted ascending by fieldName; lazily computed on demand */
+	  private transient Map.Entry<String,Info>[] sortedFields; 
+
+	  /** unanalyzed objects for each field: Map<String fieldName, Info field> */
+	  private final HashMap<String,Object> objectFields = new HashMap<String,Object>();
+	  
   
   /** pos: positions[3*i], startOffset: positions[3*i +1], endOffset: positions[3*i +2] */
   private final int stride;
@@ -349,79 +353,80 @@ public class MemoryIndex implements Serializable {
    * @see org.apache.lucene.document.Field#setBoost(float)
    */
   public void addField(String fieldName, TokenStream stream, float boost) {
-    try {
-      if (fieldName == null)
-        throw new IllegalArgumentException("fieldName must not be null");
-      if (stream == null)
-          throw new IllegalArgumentException("token stream must not be null");
-      if (boost <= 0.0f)
-          throw new IllegalArgumentException("boost factor must be greater than 0.0");
-      if (fields.get(fieldName) != null)
-        throw new IllegalArgumentException("field must not be added more than once");
-      
-      HashMap<String,ArrayIntList> terms = new HashMap<String,ArrayIntList>();
-      int numTokens = 0;
-      int numOverlapTokens = 0;
-      int pos = -1;
-      
-      TermAttribute termAtt = stream.addAttribute(TermAttribute.class);
-      PositionIncrementAttribute posIncrAttribute = stream.addAttribute(PositionIncrementAttribute.class);
-      OffsetAttribute offsetAtt = stream.addAttribute(OffsetAttribute.class);
-      
-      stream.reset();
-      while (stream.incrementToken()) {
-        String term = termAtt.term();
-        if (term.length() == 0) continue; // nothing to do
-//        if (DEBUG) System.err.println("token='" + term + "'");
-        numTokens++;
-        final int posIncr = posIncrAttribute.getPositionIncrement();
-        if (posIncr == 0)
-          numOverlapTokens++;
-        pos += posIncr;
-        
-        ArrayIntList positions = terms.get(term);
-        if (positions == null) { // term not seen before
-          positions = new ArrayIntList(stride);
-          terms.put(term, positions);
-        }
-        if (stride == 1) {
-          positions.add(pos);
-        } else {
-          positions.add(pos, offsetAtt.startOffset(), offsetAtt.endOffset());
-        }
-      }
-      stream.end();
+	    try {
+	      if (fieldName == null)
+	        throw new IllegalArgumentException("fieldName must not be null");
+	      if (stream == null)
+	          throw new IllegalArgumentException("token stream must not be null");
+	      if (boost <= 0.0f)
+	          throw new IllegalArgumentException("boost factor must be greater than 0.0");
+	      if (fields.get(fieldName) != null || objectFields.get(fieldName) != null)
+	        throw new IllegalArgumentException("field must not be added more than once");
+	      
+	      HashMap<String,ArrayIntList> terms = new HashMap<String,ArrayIntList>();
+	      int numTokens = 0;
+	      int numOverlapTokens = 0;
+	      int pos = -1;
+	      
+	      TermAttribute termAtt = stream.addAttribute(TermAttribute.class);
+	      PositionIncrementAttribute posIncrAttribute = stream.addAttribute(PositionIncrementAttribute.class);
+	      OffsetAttribute offsetAtt = stream.addAttribute(OffsetAttribute.class);
+	      
+	      stream.reset();
+	      while (stream.incrementToken()) {
+	        String term = termAtt.term();
+	        if (term.length() == 0) continue; // nothing to do
+//	        if (DEBUG) System.err.println("token='" + term + "'");
+	        numTokens++;
+	        final int posIncr = posIncrAttribute.getPositionIncrement();
+	        if (posIncr == 0)
+	          numOverlapTokens++;
+	        pos += posIncr;
+	        
+	        ArrayIntList positions = terms.get(term);
+	        if (positions == null) { // term not seen before
+	          positions = new ArrayIntList(stride);
+	          terms.put(term, positions);
+	        }
+	        if (stride == 1) {
+	          positions.add(pos);
+	        } else {
+	          positions.add(pos, offsetAtt.startOffset(), offsetAtt.endOffset());
+	        }
+	      }
+	      stream.end();
 
-      // ensure infos.numTokens > 0 invariant; needed for correct operation of terms()
-      if (numTokens > 0) {
-        boost = boost * docBoost; // see DocumentWriter.addDocument(...)
-        fields.put(fieldName, new Info(terms, numTokens, numOverlapTokens, boost));
-        sortedFields = null;    // invalidate sorted view, if any
-      }
-    } catch (IOException e) { // can never happen
-      throw new RuntimeException(e);
-    } finally {
-      try {
-        if (stream != null) stream.close();
-      } catch (IOException e2) {
-        throw new RuntimeException(e2);
-      }
-    }
+	      // ensure infos.numTokens > 0 invariant; needed for correct operation of terms()
+	      if (numTokens > 0) {
+	        boost = boost * docBoost; // see DocumentWriter.addDocument(...)
+	        fields.put(fieldName, new Info(terms, numTokens, numOverlapTokens, boost));
+	        sortedFields = null;    // invalidate sorted view, if any
+	      }
+	    } catch (IOException e) { // can never happen
+	      throw new RuntimeException(e);
+	    } finally {
+	      try {
+	        if (stream != null) stream.close();
+	      } catch (IOException e2) {
+	        throw new RuntimeException(e2);
+	      }
+	    }
+	  }
+  public void addField(String fieldName, Object o, float boost) {
+	      if (fieldName == null)
+	        throw new IllegalArgumentException("fieldName must not be null");
+	      if (o == null)
+	          throw new IllegalArgumentException("object must not be null");
+	      if (boost <= 0.0f)
+	          throw new IllegalArgumentException("boost factor must be greater than 0.0");
+	      if (fields.get(fieldName) != null || objectFields.get(fieldName) != null)
+	        throw new IllegalArgumentException("field must not be added more than once");
+	      
+
+	        objectFields.put(fieldName, o);
   }
   
-  /**
-   * Creates and returns a searcher that can be used to execute arbitrary
-   * Lucene queries and to collect the resulting query results as hits.
-   * 
-   * @return a searcher
-   */
-  public IndexSearcher createSearcher() {
-    MemoryIndexReader reader = new MemoryIndexReader();
-    IndexSearcher searcher = new IndexSearcher(reader); // ensures no auto-close !!
-    reader.setSearcher(searcher); // to later get hold of searcher.getSimilarity()
-    return searcher;
-  }
-  
+   
   /**
    * Convenience method that efficiently returns the relevance score by
    * matching this index against the given Lucene query expression.
@@ -433,55 +438,6 @@ public class MemoryIndex implements Serializable {
    *         the better the match.
    *
    */
-  public float search(Query query) {
-    if (query == null) 
-      throw new IllegalArgumentException("query must not be null");
-    
-    Searcher searcher = createSearcher();
-    try {
-      final float[] scores = new float[1]; // inits to 0.0f (no match)
-      searcher.search(query, new Collector() {
-        private Scorer scorer;
-
-        @Override
-        public void collect(int doc) throws IOException {
-          scores[0] = scorer.score();
-        }
-
-        @Override
-        public void setScorer(Scorer scorer) throws IOException {
-          this.scorer = scorer;
-        }
-
-        @Override
-        public boolean acceptsDocsOutOfOrder() {
-          return true;
-        }
-
-        @Override
-        public void setNextReader(IndexReader reader, int docBase) { }
-      });
-      float score = scores[0];
-      return score;
-    } catch (IOException e) { // can never happen (RAMDirectory)
-      throw new RuntimeException(e);
-    } finally {
-      // searcher.close();
-      /*
-       * Note that it is harmless and important for good performance to
-       * NOT close the index reader!!! This avoids all sorts of
-       * unnecessary baggage and locking in the Lucene IndexReader
-       * superclass, all of which is completely unnecessary for this main
-       * memory index data structure without thread-safety claims.
-       * 
-       * Wishing IndexReader would be an interface...
-       * 
-       * Actually with the new tight createSearcher() API auto-closing is now
-       * made impossible, hence searcher.close() would be harmless and also 
-       * would not degrade performance...
-       */
-    }   
-  }
   
   /**
    * Returns a reasonable approximation of the main memory [bytes] consumed by
@@ -652,7 +608,7 @@ public class MemoryIndex implements Serializable {
   	public JSONArray jsonMap() {
   		Map<String, Map<String,List<Integer>>> mout = mapIndex();
   		JSONArray jout = new JSONArray();
-  		if (mout == null || mout.isEmpty()) {
+  		if ((mout == null || mout.isEmpty()) && objectFields == null) {
   			return new JSONArray().put(new JSONArray());
   		}
   		for (String term : mout.keySet()) {
@@ -667,16 +623,24 @@ public class MemoryIndex implements Serializable {
 //  				}
   				try {
   					float boost = ((Info)this.fields.get(field)).getBoost();
-  					if (boost == 1.0f) {
-  						tout.put(new JSONObject().put("p", positions));
-  					} else {
- 						tout.put(new JSONObject().put("p", positions).put("b", boost));  						
+  					tout.put(positions);
+  					if (boost != 1.0f) {
+ 						tout.put(new JSONObject().put("b", boost));  						
   					}
 				} catch (JSONException e) {
 					// TODO Auto-generated catch block
 				} 
 //	  			jout.put(new JSONArray().put((new JSONArray()).put(term).put(field)).put(tout));
 	  			jout.put(new JSONArray().put((new JSONArray()).put(field).put(term)).put(tout));
+  			}
+  		}
+  		// for non analyzed keyword style terms, position is always zero
+  		if (objectFields != null && objectFields.size() > 0) {
+  			List<Integer> zero = new ArrayList<Integer>();
+  			zero.add(0);
+  			JSONArray tout = new JSONArray().put(zero); 
+  			for (String field : objectFields.keySet()) {
+  				jout.put(new JSONArray().put((new JSONArray()).put(field).put(objectFields.get(field))).put(tout));
   			}
   		}
   		return jout;
