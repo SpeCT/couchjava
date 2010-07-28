@@ -21,9 +21,19 @@ java = {showroom_ejje_server, start_link, ['ejje@HOSTNAME', "com.cloudant.couchd
 
 2) Start the JVM 'node' with the view server code
 
+make sure empd is running.  If not, start it:
+
+epmd -daemon
+
+Now start the java process:
+
 $ java -Djava.security.manager -Djava.security.policy=policy.txt -cp ./dist/ellison.jar com.cloudant.ejje.Ejje ejje@`hostname -f` cookiename
 
-Where you may need to modify the path of the jar, and the name/cookie for the node.  Be sure to match the node name 'ejje@HOSTNAME' in both .ini and launch command.  If you don't specify the cookiename in the java start command, it will default to the erlang default cookie.
+Where you may need to modify the path of the jar, and the name/cookie for the node.  Be sure to match the node name 'ejje@HOSTNAME' in both .ini and java launch command.  If you don't specify the cookiename in the java start command, it will default to the erlang default cookie.  If you specify a cookie in the java command, you also need to use "-setcookie cookiename" in your dbcore erlang start command.
+
+If your CouchDB instance has permissions enabled, you'll need to specify the admin user name and password in order to allow reading of any uploaded jar files by the URLClassLoader.   
+
+java -Djava.security.manager -Djava.security.policy=policy.txt -Ddbcore.user=<admin_username> -Ddbcore.password=<admin_password> -cp ./dist/ellison.jar com.cloudant.ejje.Ejje ejje@`hostname -f` cookiename
 
 
 Implementing a view:

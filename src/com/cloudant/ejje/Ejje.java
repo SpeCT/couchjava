@@ -1,6 +1,8 @@
 package com.cloudant.ejje;
 
 import java.io.IOException;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -62,6 +64,14 @@ public class Ejje {
             OtpErlangString data;
             OtpErlangString ref;
             OtpErlangTuple resp;
+            // set up authentication for url class loading
+            if (System.getProperty("dbcore.user") != null && System.getProperty("dbcore.password") != null) {
+            	Authenticator.setDefault (new Authenticator() {
+            		protected PasswordAuthentication getPasswordAuthentication() {
+            			return new PasswordAuthentication (System.getProperty("dbcore.user"), System.getProperty("dbcore.password").toCharArray());
+            		}
+            	});
+            }
 
             while( running ) {
                 try {

@@ -1,5 +1,7 @@
 package com.cloudant.couchdbjavaserver;
 
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -23,10 +25,8 @@ public class JavaViewServer extends ViewServer {
 
 	private String mboxname = "";
 	
-//	private List<JavaView> views = new ArrayList<JavaView>();
 	private List<JavaView> views = new ArrayList<JavaView>();
 	private ClassUrls classUrls = ClassUrls.getInstance();
-//	private List<URL> libUrls = new ArrayList<URL>();
 
 	public JavaViewServer() {}
 	
@@ -56,7 +56,7 @@ public class JavaViewServer extends ViewServer {
 			switch (c) {
 			case RESET:
 				views.clear();
-//				classUrls.clear();
+				classUrls.clear();
 				return "true";
 			case ADD_LIBRARY:
 				String urlString = ErlangJson.binstr(data, 1);
@@ -96,7 +96,7 @@ public class JavaViewServer extends ViewServer {
 				for (JavaView view : views) {
 					ret.put(view.MapDoc(jsondoc));
 				}
-				Log(ret.toString());
+//				Log(ret.toString());
 				return ret.toString();
 			case REDUCE:
 				try {
