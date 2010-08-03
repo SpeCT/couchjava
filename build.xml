@@ -66,6 +66,7 @@
                    value="com.cloudant.ejje.Ejje"/>
         <attribute name="Class-Path" value="."/>
       </manifest>
+<!--      <fileset dir="${project.home}/bin" excludes="**/javaviews/"/> -->
       <fileset dir="${project.home}/bin"/>
       <zipfileset excludes="META-INF/*.SF"
                   src="${lib.dir}/org.json.jar"/>

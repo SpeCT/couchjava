@@ -23,13 +23,14 @@ import org.json.JSONObject;
 public class CouchIndexUtils {
 	
 	private static boolean DEBUG = true;
+	private static boolean STDOUTOK = false;
 	
 	public static JSONObject ConvertStringToJSON(String input) {
 		if (input==null) return null;
 		try {
 			return new JSONObject(input);
 		} catch	(JSONException je) {
-			System.out.println(je.getMessage());
+			if (STDOUTOK) System.out.println(je.getMessage());
 			try {
 				return new JSONObject().put("error", "GetDocument").put("Http Response", 406);
 			} catch (JSONException e) {
@@ -93,7 +94,7 @@ public class CouchIndexUtils {
 					map.put(name, ((Boolean)o).toString());
 				} 
 			} catch (JSONException je) {
-				System.out.println(je.getMessage());
+				if (STDOUTOK) System.out.println(je.getMessage());
 			}
 		}
 		return map;
@@ -123,7 +124,7 @@ public class CouchIndexUtils {
 					map.put(name, ((Boolean)o).toString());
 				}
 			} catch (JSONException je) {
-				System.out.println(je.getMessage());
+				if (STDOUTOK) System.out.println(je.getMessage());
 			}
 		}
 		return map;
@@ -155,7 +156,7 @@ public class CouchIndexUtils {
 					map.put(name, ((Boolean)o).toString());
 				} 
 			} catch (JSONException je) {
-				System.out.println(je.getMessage());
+				if (STDOUTOK) System.out.println(je.getMessage());
 			}
 		}
 		return map;
@@ -185,7 +186,7 @@ public class CouchIndexUtils {
 					map.put(name, ((Boolean)o).toString());
 				}
 			} catch (JSONException je) {
-				System.out.println(je.getMessage());
+				if (STDOUTOK) System.out.println(je.getMessage());
 			}
 		}
 		return map;
@@ -249,7 +250,7 @@ public class CouchIndexUtils {
 				}
 			}
 		} catch (Exception e) {
-			System.out.println(e.getMessage());			
+			if (STDOUTOK) System.out.println(e.getMessage());			
 		}
 		return outArray;
 	}
@@ -281,7 +282,7 @@ public class CouchIndexUtils {
 					/* no values in this row */
 				}
 		} catch (Exception e) {
-			System.out.println(e.getMessage());			
+			if (STDOUTOK) System.out.println(e.getMessage());			
 			return 0;
 		}
 	}
@@ -308,7 +309,7 @@ public class CouchIndexUtils {
 				}
 			}
 		} catch (Exception e) {
-			System.out.println(e.getMessage());			
+			if (STDOUTOK) System.out.println(e.getMessage());			
 		}
 		return fields;
 	}
@@ -373,7 +374,7 @@ public class CouchIndexUtils {
 				}
 			}
 		} catch (Exception e) {
-			System.out.println(e.getMessage());			
+			if (STDOUTOK) System.out.println(e.getMessage());			
 		}
 		return outArray;
 	}
@@ -397,7 +398,7 @@ public class CouchIndexUtils {
 //							}
 			}
 		} catch (Exception e) {
-			System.out.println(e.getMessage());			
+			if (STDOUTOK) System.out.println(e.getMessage());			
 		}
 		return outArray;
 	}
@@ -451,7 +452,7 @@ public class CouchIndexUtils {
 				rd.close();
 				return sb.toString();
 			} catch (Exception e) {
-				System.out.println(e.getMessage());
+				if (STDOUTOK) System.out.println(e.getMessage());
 				try {
 					return new JSONObject().put("error", "GetDocument").put("Http Response", 500).put("url", url).toString();
 				} catch (Exception e1) {
@@ -497,7 +498,7 @@ public class CouchIndexUtils {
 		rd.close();
 		return sb.toString();
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			if (STDOUTOK) System.out.println(e.getMessage());
 			return "Error with post";
 		}
 	}
