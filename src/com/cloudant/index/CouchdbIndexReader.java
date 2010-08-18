@@ -115,6 +115,16 @@ public class CouchdbIndexReader extends IndexReader {
 		credentials = new Credentials(null, null, null, null);
 	}
 	
+	public boolean checkIndexExists() throws IOException {
+		String designDocUrl = databaseUrl + "_design/lucene";
+		JSONObject designDoc = CouchIndexUtils.GetJSONDocument(credentials, designDocUrl.toString());
+		if (designDoc == null || designDoc.has("error")) {
+			return false;
+		}
+		return true;
+	}
+	
+	
 	public int getLuceneId(String couchid) {
 		return dmap.getLuceneId(couchid);
 	}

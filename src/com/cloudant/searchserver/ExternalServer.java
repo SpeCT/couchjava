@@ -1,5 +1,6 @@
 package com.cloudant.searchserver;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -86,12 +87,23 @@ public class ExternalServer {
 //				if (cookies != null) {
 //					reader = CouchdbIndexReader.open(urlString, cookies);
 				try {
-					String authorization = headers.getString("Authorization");
-					reader = CouchdbIndexReader.open(urlString, authorization);
-				} catch (JSONException je) {
-					reader = CouchdbIndexReader.open(urlString);
+					try {
+						String authorization = headers.getString("Authorization");
+						reader = CouchdbIndexReader.open(urlString, authorization);
+						if (!((CouchdbIndexReader) reader).checkIndexExists()) throw new IOException("search index not available for this database.  Please enable if you have a paid account, or contact support@cloudant.com for pricing information.");
+					} catch (JSONException je) {
+						reader = CouchdbIndexReader.open(urlString);
+						if (!((CouchdbIndexReader) reader).checkIndexExists()) throw new IOException("search index not available for this database.  Please enable if you have a paid account, or contact support@cloudant.com for pricing information.");
+					}
+				} catch (IOException ioe) {
+					JSONObject output = new JSONObject();
+					Integer response = new Integer(200);
+					output.put("code", response);
+					jout.put("error", ioe.getMessage());
+					output.append("json", jout);
+					System.out.println(output.toString());
+					continue;					
 				}
-			    
 
 			    Searcher searcher = new IndexSearcher(reader);
 //			    Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
