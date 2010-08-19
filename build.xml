@@ -1,21 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="jars"
-         name="couchdb-java-viewserver">
+         name="javaview">
 
   <!-- settable properties -->
   <property file="build.properties"/>
   <property name="project.home" value="."/>
-  <property name="jar.name.server" value="ellison.jar"/>
   <property name="jar.name.views" value="javaviews.jar"/>  
-  <property name="jar.name.search" value="searchcouch.jar"/>
-  <property name="war.name.searchapp" value="searchserver.war"/>
 
   <!-- internal properties -->
   <property name="src.dir" value="${project.home}/src"/>
   <property name="bin.dir" value="${project.home}/bin"/>
   <property name="lib.dir" value="${project.home}/lib"/>
   <property name="dist.dir" value="${project.home}/dist"/>
-  <property name="web.dir" value="${project.home}/WebContent"/>
 
   <!-- get system variables -->
   <property environment="env"/>
@@ -26,13 +22,6 @@
     <fileset dir="${lib.dir}">
       <include name="**/*.jar"/>
     </fileset>
-    <fileset dir="${web.dir}/WEB-INF/lib">
-      <include name="**/*.jar"/>
-    </fileset>
-<!--    <fileset dir="${env.JETTY_HOME}/lib">
-      <include name="**/*.jar"/>
-    </fileset>
--->
   </path>
 
   <!-- targets -->
@@ -57,27 +46,6 @@
     </javac>
   </target>
 
-  <target name="server.jar" depends="compile">
-    <mkdir dir="${dist.dir}"/>
-    <jar destfile="${dist.dir}/${jar.name.server}"
-         filesetmanifest="mergewithoutmain">
-      <manifest>
-        <attribute name="Main-Class"
-                   value="com.cloudant.ejje.Ejje"/>
-        <attribute name="Class-Path" value="."/>
-      </manifest>
-<!--      <fileset dir="${project.home}/bin" excludes="**/javaviews/"/> -->
-      <fileset dir="${project.home}/bin"/>
-      <zipfileset excludes="META-INF/*.SF"
-                  src="${lib.dir}/org.json.jar"/>
-      <zipfileset excludes="META-INF/*.SF"
-                  src="${lib.dir}/OtpErlang.jar"/>
-      <zipfileset excludes="META-INF/*.SF"
-                    src="${lib.dir}/lucene-core-3.1-dev.jar"/>
-      <zipfileset excludes="META-INF/*.SF"
-                    src="${lib.dir}/lucene-memory-3.1-dev.jar"/>
-    </jar>
-  </target>
 
 
 
@@ -88,55 +56,14 @@
       <manifest>
         <attribute name="Class-Path" value="."/>
       </manifest>
-      <fileset dir="${project.home}/bin" excludes="**/couchdbjavaserver/"/>
+       <fileset dir="${project.home}/bin" excludes="**/couchdbjavaserver/"/>
         <zipfileset excludes="META-INF/*.SF"
                     src="${lib.dir}/org.json.jar"/>
-        <zipfileset excludes="META-INF/*.SF"
-                    src="${lib.dir}/OtpErlang.jar"/>
-        <zipfileset excludes="META-INF/*.SF"
-                    src="${lib.dir}/lucene-core-3.1-dev.jar"/>
-        <zipfileset excludes="META-INF/*.SF"
-                    src="${lib.dir}/lucene-memory-3.1-dev.jar"/>
     </jar>
   </target>
 
-  <target name="search.jar" depends="compile">
-    <mkdir dir="${dist.dir}"/>
-    <jar destfile="${dist.dir}/${jar.name.search}"
-         filesetmanifest="mergewithoutmain">
-      <manifest>
-        <attribute name="Main-Class"
-                   value="com.cloudant.test.SearchCouch"/>
-        <attribute name="Class-Path" value="."/>
-      </manifest>
-      <fileset dir="${project.home}/bin" excludes="**/javaviews/"/>
-      <fileset dir="${project.home}/bin" excludes="**/ejje/"/>
-      <fileset dir="${project.home}/bin" excludes="**/couchdbjavaserver/"/>
-      <zipfileset excludes="META-INF/*.SF"
-                  src="${lib.dir}/org.json.jar"/>
-      <zipfileset excludes="META-INF/*.SF"
-                  src="${lib.dir}/lucene-core-3.1-dev.jar"/>
-    </jar>
-  </target>
 
-  <target name="searchserver" depends="server.jar">
-     <war destfile="${dist.dir}/${war.name.searchapp}" webxml="${web.dir}/WEB-INF/web.xml">
-     <fileset dir="${web.dir}"/>
-     <lib dir="${web.dir}/WEB-INF/lib"/>
-     <classes dir="${bin.dir}"/>
-     </war>
-  </target>
-
-  <target name="deploy-local" depends="searchserver">
-  <copy todir="${env.CATALINA_HOME}/webapps/">
-   <fileset file="${dist.dir}/${war.name.searchapp}" />
-  </copy>
-  <copy todir="${env.JETTY_HOME}/webapps/">
-   <fileset file="${dist.dir}/${war.name.searchapp}" />
-  </copy>
-  </target>
-
-  <target name="jars" depends="server.jar, views.jar, search.jar"/>
+  <target name="jars" depends="views.jar"/>
 
     <target name="javadoc">
      <mkdir  dir="${project.home}/docs"/>

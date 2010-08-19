@@ -1,40 +1,4 @@
-couchdb-java-viewserver is a java language view server for couchdb.
-
-To compile:
-
-1) Do "ant server.jar"
-2) This creates a runnable jar file in the dist directory, dist/ellison.jar.
-
-Get the patch couchdb and compile:
-
-https://gist.github.com/aed82822749223b6dd1d
-
-To attach to couchdb:
-
-1) Add the following lines to your couchdb local.ini file:
-
-Get HOSTNAME using "hostname -f" command
-
-
-[native_query_servers]
-java = {showroom_ejje_server, start_link, ['ejje@HOSTNAME', "com.cloudant.couchdbjavaserver.JavaViewServer"]}
-
-2) Start the JVM 'node' with the view server code
-
-make sure empd is running.  If not, start it:
-
-epmd -daemon
-
-Now start the java process:
-
-$ java -Djava.security.manager -Djava.security.policy=policy.txt -cp ./dist/ellison.jar com.cloudant.ejje.Ejje ejje@`hostname -f` cookiename
-
-Where you may need to modify the path of the jar, and the name/cookie for the node.  Be sure to match the node name 'ejje@HOSTNAME' in both .ini and java launch command.  If you don't specify the cookiename in the java start command, it will default to the erlang default cookie.  If you specify a cookie in the java command, you also need to use "-setcookie cookiename" in your dbcore erlang start command.
-
-If your CouchDB instance has permissions enabled, you'll need to specify the admin user name and password in order to allow reading of any uploaded jar files by the URLClassLoader.   
-
-java -Djava.security.manager -Djava.security.policy=policy.txt -Ddbcore.user=<admin_username> -Ddbcore.password=<admin_password> -cp ./dist/ellison.jar com.cloudant.ejje.Ejje ejje@`hostname -f` cookiename
-
+couchdb-java-viewserver is a java language view server for couchdb that runs on Cloudant.
 
 Implementing a view:
 
