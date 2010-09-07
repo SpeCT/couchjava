@@ -26,8 +26,7 @@ To compile the SplitText example, do "ant jars" or simply "ant" ("jars" is the d
 
 By default, all classes contained in the src directory are compiled and added to the jar.  Additionally, all jars in the lib directory are in the default build path.  To package a jar contained in the lib directory with your javaviews.jar, modify the "views.jar" target, adding:
 
-<zipfileset excludes="META-INF/*.SF"
-                    src="${lib.dir}/org.json.jar"/>
+	<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/org.json.jar"/>
 
 Where "org.json.jar" is replaced with the name of the jar file you reference.
 
@@ -38,15 +37,15 @@ You now need to load the view into CouchDb.  Cloudant has implemented Java lanua
 
 For the following example, my database is named "wikipedia".  The design document looks like:
 
-{
-    "_id":"_design/splittext",
+
+    {"_id":"_design/splittext",
     "language":"java",
     "views" :
 	{
-	"title" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"title\"}","reduce":"com.cloudant.javaviews.SplitText"},
-	"text" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"text\"}","reduce":"com.cloudant.javaviews.SplitText"}
+		"title" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"title\"}","reduce":"com.cloudant.javaviews.SplitText"},
+		"text" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"text\"}","reduce":"com.cloudant.javaviews.SplitText"}
 	}
-}
+    }
 
 Note that you need to pass a single variable to "map", the full class name of your JavaView implmentation.  The "configure" field is optional and allows you to configure your class at run time.  Also note that by CouchDb design, the values pointed to by the "map" and "reduce" keys are strings.  In the case of "map", we stringify the JSON object that is used to configure "map" (that's why we need to escape the quotes).
 
