@@ -1,9 +1,11 @@
 ### Overview
 
 couchjava is the interface for the java language view server for CouchDb that runs on [Cloudant's BigCouch][1].  CouchDb views are normally written in Javascript, but Java language views have several applications and advantages:
+
  * Syntax checking at compile time.
  * Allows for re-use of existing Java language libaries and functions.
  * Wide knowledge of Java language
+
 The java view server is enabled by default for all users of Cloudant's hosted CouchDb service.  To sign up for an account, visit the [Cloudant Home Page][1].
 
 ### Writing a view
