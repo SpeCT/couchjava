@@ -1,16 +1,39 @@
-couchjava is the interface for the java language view server for CouchDb that runs on Cloudant's BigCouch.
+couchjava is the interface for the java language view server for CouchDb that runs on Cloudant's BigCouch.  CouchDb views are normally written in Javascript, but Java language views have several applications and advantages:
+-- Syntax checking at compile time.
+-- Allows for re-use of existing java language libaries and functions.
+-- Wide knowledge of Java language
 
-Implementing a view:
+Writing a view:
 
-There is an example view is com/cloudant/javaviews/SplitText.java
+First, you should clone this repository:
 
-A view can be created by creating a java class that implements the methods of the com.cloudant.couchdbjavaserver.JavaView interface.
+git clone git@github.com:cloudant/couchjava.git
 
-Once you have your class, make it into a jar archive (being sure to include any needed non-standard libaries).
+There is an example view is com/cloudant/javaviews/SplitText.java.  This example splits text at white space during map and counts the terms during reduce.   
 
-To compile, do "ant views.jar".  This will create a jar archive dist/javaviews.jar.
+A user defined view can be created by creating a java class that implements the methods of the com.cloudant.couchdbjavaserver.JavaView interface.  The javadocs for this interface are at https://cloudant.com/doc/javaviews/com/cloudant/couchdbjavaserver/JavaView.html.
 
-You now need to load the view into couch db.  For this example, my database is named "wikipedia".  The design document looks like:
+Compiling your view:
+
+Once you have written your class, you need to make it into a jar archive that can be uploaded to cloudant.  The jar archive should contain all of your user code and any non-standard libraries that you call.  
+
+For our example, we use the ant build system (http://ant.apache.org/).  The build steps are contained in the build.xml file.
+
+To compile the SplitText example, do "ant jars" or simply "ant" ("jars" is the default target).  This will create a jar archive dist/javaviews.jar.
+
+By default, all classes contained in the src directory are compiled and added to the jar.  Additionally, all jars in the lib directory are in the default build path.  To package a jar contained in the lib directory with your javaviews.jar, modify the "views.jar" target, adding:
+
+<zipfileset excludes="META-INF/*.SF"
+                    src="${lib.dir}/org.json.jar"/>
+
+Where "org.json.jar" is replaced with the name of the jar file you reference.
+
+Uploading your view:
+
+You now need to load the view into CouchDb.  Cloudant has implemented Java lanuage views such that the Java code and libraries are uploaded as binary attachments to a design document.  The design document is written in JSON and specifies which class to call and any necessary configuration information.   
+
+
+For the following example, my database is named "wikipedia".  The design document looks like:
 
 {
     "_id":"_design/splittext",
@@ -22,11 +45,13 @@ You now need to load the view into couch db.  For this example, my database is n
 	}
 }
 
-Note that you need to pass a single variable to "map", the full class name of your JavaView implmentation.  The "configure" field is optional and allows you to configure your class at run time.  Upload this file (which I have saved on disk as splittext.json):
+Note that you need to pass a single variable to "map", the full class name of your JavaView implmentation.  The "configure" field is optional and allows you to configure your class at run time.  Also note that by CouchDb design, the values pointed to by the "map" and "reduce" keys are strings.  In the case of "map", we stringify the JSON object that is used to configure "map" (that's why we need to escape the quotes).
+
+Upload this design doc, either using the command line interface or by saving the file on disk as splittext.json:
 
 curl -X PUT http://localhost:5984/wikipedia/_design/splittext -d @splittext.json
 
-Now you need to grab the revision id (using GET) in order to attach the jar file that contains your class:
+Now you need to grab the revision id (using GET) in order to attach the jar file that contains your class.  Here is the command to upload the binary attachment.
 
 curl -X PUT http://localhost:5984/wikipedia/_design/splittext/javaviews.jar?rev=1-d58671fd0844f4466f498f22575ec308 --data-binary @javaviews.jar
 
