@@ -1,12 +1,12 @@
 ### Overview
 
-couchjava is the interface for the java language view server for CouchDb that runs on [Cloudant's BigCouch][1].  CouchDb views are normally written in Javascript, but Java language views have several applications and advantages:
+couchjava is the interface for the java language view server for CouchDB that runs on [Cloudant's BigCouch][1].  CouchDB views are normally written in Javascript, but Java language views have several applications and advantages:
 
  * Syntax checking at compile time.
- * Allows for re-use of existing Java language libaries and functions.
+ * Allows for re-use of existing Java language libraries and functions.
  * Wide knowledge of Java language
 
-The java view server is enabled by default for all users of Cloudant's hosted CouchDb service.  To sign up for an account, visit the [Cloudant Home Page][1].
+The java view server is enabled by default for all users of Cloudant's hosted CouchDB service.  To sign up for an account, visit the [Cloudant Home Page][1].
 
 ### Writing a view
 
@@ -34,7 +34,7 @@ Where "org.json.jar" is replaced with the name of the jar file you reference.
 
 ### Uploading your view:
 
-You now need to load the view into CouchDb.  Cloudant has implemented Java lanuage views such that the Java code and libraries are uploaded as binary attachments to a design document.  The design document is written in JSON and specifies which class to call and any necessary configuration information.   
+You now need to load the view into CouchDB.  Cloudant has implemented Java language views such that the Java code and libraries are uploaded as binary attachments to a design document.  The design document is written in JSON and specifies which class to call and any necessary configuration information.   
 
 
 For the following example, my database is named "wikipedia".  The design document looks like:
@@ -49,7 +49,7 @@ For the following example, my database is named "wikipedia".  The design documen
 	}
     }
 
-Note that you need to pass a single variable to "map", the full class name of your JavaView implmentation.  The "configure" field is optional and allows you to configure your class at run time.  Also note that by CouchDb design, the values pointed to by the "map" and "reduce" keys are strings.  In the case of "map", we stringify the JSON object that is used to configure "map" (that's why we need to escape the quotes).
+Note that you need to pass a single variable to "map", the full class name of your JavaView implementation.  The "configure" field is optional and allows you to configure your class at run time.  Also note that by CouchDB design, the values pointed to by the "map" and "reduce" keys are strings.  In the case of "map", we stringify the JSON object that is used to configure "map" (that's why we need to escape the quotes).
 
 Upload this design doc, either using the command line interface or by saving the file on disk as splittext.json:
 
@@ -71,7 +71,7 @@ counts documents with "an" in field "text"
 
 ### Contact
 
-Cloudant folks are usually hanging out in IRC.  Freenode, channel #cloudant.  Wemay also be reached:
+Cloudant folks are usually hanging out in IRC.  Freenode, channel #cloudant.  We may also be reached:
 
  * [http://cloudant.com][1]
  * [info@cloudant.com][5]
