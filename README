@@ -1,4 +1,4 @@
-couchdb-java-viewserver is a java language view server for couchdb that runs on Cloudant.
+couchjava is the interface for the java language view server for CouchDb that runs on Cloudant's BigCouch.
 
 Implementing a view:
 
