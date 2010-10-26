@@ -56,9 +56,7 @@
       <manifest>
         <attribute name="Class-Path" value="."/>
       </manifest>
-       <fileset dir="${project.home}/bin" excludes="**/couchdbjavaserver/"/>
-        <zipfileset excludes="META-INF/*.SF"
-                    src="${lib.dir}/org.json.jar"/>
+       <fileset dir="${project.home}/bin" excludes="**/couchdbjavaserver/,**/index/"/>
     </jar>
   </target>
 

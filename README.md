@@ -16,6 +16,8 @@ First, you should clone this repository:
 
 There is an example view in the directory [com/cloudant/javaviews/SplitText.java][3].  This example splits text at white space during map and counts the terms during reduce.   
 
+There is also an example of a custom lucene indexer com/cloudant/indexers/MyCustomSearch.java.  This shows how to write a user defined indexer for use with Clloudant's search.
+
 A user defined view can be created by creating a java class that implements the methods of the [com.cloudant.couchdbjavaserver.JavaView interface][2].
 
 ### Compiling your view
