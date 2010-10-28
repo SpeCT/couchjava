@@ -16,9 +16,9 @@ First, you should clone this repository:
 
 There is an example view in the directory [com/cloudant/javaviews/SplitText.java][3].  This example splits text at white space during map and counts the terms during reduce.   
 
-There is also an example of a custom lucene indexer com/cloudant/indexers/MyCustomSearch.java.  This shows how to write a user defined indexer for use with Clloudant's search.
+There is also an example of a custom Lucene indexer [com/cloudant/indexers/MyCustomSearch.java][6].  This shows how to write a user defined indexer for use with Cloudant's search.
 
-A user defined view can be created by creating a java class that implements the methods of the [com.cloudant.couchdbjavaserver.JavaView interface][2].
+A user defined view can be created by creating a java class that implements the methods of the [com.cloudant.couchdbjavaserver.JavaView interface][2].  For a search indexing class, you'll want to implement [com.cloudant.couchdbjavaserver.SearchView interface][7]
 
 ### Compiling your view
 
@@ -71,6 +71,20 @@ gets all documents with "an" in field "text".
 
 counts documents with "an" in field "text"
 
+### Cloudant Search View
+
+To use [com.cloudant.indexers.MyCustomSearch][6] for indexing your database, you'll need to upload the following design document in the standard location (_design/lucene):
+
+    {
+        "language":"java",
+        "views" : 
+	    "index" : {"map":"{\"classname\":\"com.cloudant.indexers.MyCustomSearch\",\"configure\":{\"analyzer\":\"org.apache.lucene.analysis.WhitespaceAnalyzer\",\"fields[{\"name\":\".*\",\"lucenename\":\"all\",\"type\":\"string\",\"regexp\":true}]}}","reduce":"_count"}
+	    }    
+    }
+
+MyCustomSearch is identical to the standard Cloudant Search class com.cloudant.indexers.CustomSearch.  Full configuration instructions can be found on [Cloudant Support][8].
+
+
 ### Contact
 
 Cloudant folks are usually hanging out in IRC.  Freenode, channel #cloudant.  We may also be reached:
@@ -85,3 +99,6 @@ Cloudant folks are usually hanging out in IRC.  Freenode, channel #cloudant.  We
 [3]: https://cloudant.com/doc/javaviews/com/cloudant/javaviews/SplitText.html
 [4]: http://ant.apache.org/
 [5]: mailto:info@cloudant.com
+[6]: https://cloudant.com/doc/javaviews/com/cloudant/indexers/MyCustomSearch.html
+[7]: https://cloudant.com/doc/javaviews/com/cloudant/couchdbjavaserver/SearchView.html
+[8]: http://support.cloudant.com/faqs/search/search-indexing

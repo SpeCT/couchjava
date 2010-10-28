@@ -15,8 +15,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import com.cloudant.couchdbjavaserver.*;
 import com.cloudant.index.CouchIndexUtils;
-import com.cloudant.javaviews.IndexType;
-import com.cloudant.indexers.SingleDocumentIndex;
+import com.cloudant.index.IndexType;
+import com.cloudant.index.IndexUtilities;
+import com.cloudant.index.SingleDocumentIndex;
 import com.stinkyteddy.utils.StDateUtils;
 
 import org.apache.lucene.analysis.standard.*;
@@ -63,6 +64,7 @@ public class MyCustomSearch implements SearchView {
 				return out.put(new JSONArray());
 			}
 			for (String field : mapped.keySet()) {
+				try {
 				FieldOption fo = findField(field);
 				if (fo == null) continue;
 				Object o = mapped.get(field);
@@ -75,7 +77,8 @@ public class MyCustomSearch implements SearchView {
 						case STRING: index.addField(luceneName, IndexUtilities.ObjectToString(o), analyzer, boost);break;
 						case KEYWORD: index.addField(luceneName, IndexUtilities.ObjectToString(o), boost);break;
 						case BOOLEAN: index.addField(luceneName, o, boost);break;
-						case INT: index.addField(luceneName, (Integer)o, boost);break;
+						// JSON doesn't distinguish between int and long, always returns long
+						case INT: index.addField(luceneName, (Long)o, boost);break;
 						case LONG: index.addField(luceneName, (Long)o, boost);break;
 						case FLOAT: index.addField(luceneName, (Float)o, boost);break;
 						case DOUBLE: index.addField(luceneName, (Double)o, boost);break;
@@ -91,6 +94,9 @@ public class MyCustomSearch implements SearchView {
 						case JSONOBJECT: index.addField(luceneName, o, boost);break;
 						case NULL: index.addField(luceneName, (Object)JSONObject.NULL, boost);break;
 					}
+				} catch (Exception e) {
+					/* probably a casting exception */
+				}
 			}
 			out = index.jsonMap();
 		} catch (Exception e) {
