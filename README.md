@@ -78,6 +78,7 @@ To use [com.cloudant.indexers.MyCustomSearch][6] for indexing your database, you
     {
         "language":"java",
         "views" : 
+	{
 	    "index" : {"map":"{\"classname\":\"com.cloudant.indexers.MyCustomSearch\",\"configure\":{\"analyzer\":\"org.apache.lucene.analysis.WhitespaceAnalyzer\",\"fields[{\"name\":\".*\",\"lucenename\":\"all\",\"type\":\"string\",\"regexp\":true}]}}","reduce":"_count"}
 	    }    
     }
