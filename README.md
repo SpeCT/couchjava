@@ -46,12 +46,12 @@ For the following example, my database is named "wikipedia".  The design documen
     "language":"java",
     "views" :
 	{
-		"title" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"title\"}","reduce":"com.cloudant.javaviews.SplitText"},
-		"text" : {"map":"{\"classname\":\"com.cloudant.javaviews.SplitText\",\"configure\":\"text\"}","reduce":"com.cloudant.javaviews.SplitText"}
+		"title" : {"map":{"classname":"com.cloudant.javaviews.SplitText","configure":"title"},"reduce":"com.cloudant.javaviews.SplitText"},
+		"text" : {"map":{"classname":"com.cloudant.javaviews.SplitText","configure":"text"},"reduce":"com.cloudant.javaviews.SplitText"}
 	}
     }
 
-Note that you need to pass a single variable to "map", the full class name of your JavaView implementation.  The "configure" field is optional and allows you to configure your class at run time.  Also note that by CouchDB design, the values pointed to by the "map" and "reduce" keys are strings.  In the case of "map", we stringify the JSON object that is used to configure "map" (that's why we need to escape the quotes).
+Note that you required to pass an JSON Object to "map" containing the full class name of your JavaView implementation.  The "configure" field is optional and allows you to configure your class at run time.  Reduce takes a single string with the name of the class containing Java reduce function (or a CouchDB builtin like _count, _sum, etc.)
 
 Upload this design doc, either using the command line interface or by saving the file on disk as splittext.json:
 
@@ -79,7 +79,7 @@ To use [com.cloudant.indexers.MyCustomSearch][6] for indexing your database, you
         "language":"java",
         "views" : 
 	{
-	    "index" : {"map":"{\"classname\":\"com.cloudant.indexers.MyCustomSearch\",\"configure\":{\"analyzer\":\"org.apache.lucene.analysis.WhitespaceAnalyzer\",\"fields[{\"name\":\".*\",\"lucenename\":\"all\",\"type\":\"string\",\"regexp\":true}]}}","reduce":"_count"}
+	    "index" : {"map":{"classname":"com.cloudant.indexers.MyCustomSearch","configure":{"analyzer":"org.apache.lucene.analysis.WhitespaceAnalyzer","fields[{"name":".*","lucenename":"all","type":"string","regexp":true}]}},"reduce":"_count"}
 	    }    
     }
 
