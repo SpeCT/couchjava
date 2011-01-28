@@ -18,7 +18,9 @@ views/title/reduce.java
 
 Any jar files that you want to upload should be place in the _attachments directory (note -- you can place multiple jar files there).  If you want to work with the deafult javaviews.jar file created by the couchjava project, create  a symoblic link to couchjava/dist/javaviews.jar
 
-<pre><code>ln -s ../../dist/javaviews.jar _attachments/javaviews.jar</code></pre>
+<pre><code>mkdir _attachments
+ln -s ../../dist/javaviews.jar _attachments/javaviews.jar
+</code></pre>
 
 If you wish to specify a default database for this view, modify the .couchapprc file:
 
