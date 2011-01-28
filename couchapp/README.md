@@ -8,10 +8,7 @@ cloudant hosted account (sign up at <https://cloudant.com/#!/solutions/cloud>), 
 
 This is a simple example couchapp that uploads a java language view.  The is part of the [couchjava][1] project.
 
-To specify that the language of the view is java, there is a file:
-
-language
-
+To specify that the language of the view is java, there is a file "language"
 containing the term "java" in the top level directory.
 
 As with all couchapps, the view is defined in the view folder.  In this case, there is a view call "title" with a map and reduces classes defined:
@@ -43,7 +40,7 @@ Otherwise, you can specify the database in the couchapp call:
 Cloudant folks are usually hanging out in IRC.  Freenode, channel #cloudant.  We may also be reached:
 
  * [http://cloudant.com][1]
- * [info@cloudant.com][5]
+ * [info@cloudant.com][3]
 
 ----
 
