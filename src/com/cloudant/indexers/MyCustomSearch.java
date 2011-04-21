@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -58,22 +59,25 @@ public class MyCustomSearch implements SearchView {
 			// user specified field set
 
 			
-			Map<String, Object> mapped = CouchIndexUtils.MapJSONObject2Object(doc, null);
+			Map<String, List<Object>> mapped = CouchIndexUtils.MapJSONObject2Object(doc, null);
 			if (mapped == null) {
 //				Log("can't map json doc");
 				return out.put(new JSONArray());
 			}
 			for (String field : mapped.keySet()) {
 				try {
-				FieldOption fo = findField(field);
-				if (fo == null) continue;
-				Object o = mapped.get(field);
-				if (o == null) continue;
-				final IndexType type = fo.getType();
-				final float boost = (float)fo.getBoost();
-				String luceneName = fo.getFieldName();
-				if (luceneName == null) luceneName = field;
-					switch (type) {
+					FieldOption fo = findField(field);
+					if (fo == null) continue;
+					List<Object> l = mapped.get(field);
+					Iterator<Object> iter = l.iterator();
+					while (iter.hasNext()) {
+						Object o = iter.next();
+						if (o == null) continue;
+						final IndexType type = fo.getType();
+						final float boost = (float)fo.getBoost();
+						String luceneName = fo.getFieldName();
+						if (luceneName == null) luceneName = field;
+						switch (type) {
 						case STRING: index.addField(luceneName, IndexUtilities.ObjectToString(o), analyzer, boost);break;
 						case KEYWORD: index.addField(luceneName, IndexUtilities.ObjectToString(o), boost);break;
 						case BOOLEAN: index.addField(luceneName, o, boost);break;
@@ -93,6 +97,7 @@ public class MyCustomSearch implements SearchView {
 						}
 						case JSONOBJECT: index.addField(luceneName, o, boost);break;
 						case NULL: index.addField(luceneName, (Object)JSONObject.NULL, boost);break;
+						}
 					}
 				} catch (Exception e) {
 					/* probably a casting exception */
