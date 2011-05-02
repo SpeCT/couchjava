@@ -65,7 +65,7 @@
 
     <target name="javadoc">
      <mkdir  dir="${project.home}/docs"/>
-       <javadoc access="public" author="true" classpath="lib/org.json.jar,lib/lucene-core-3.0.2.jar"
+       <javadoc access="public" author="true" classpath="lib/org.json.jar,lib/lucene-core-3.0.3.jar,lib/lucene-snowball-3.0.3.jar"
 destdir="${project.home}/docs" nodeprecated="false" nodeprecatedlist="false" noindex="false"
 nonavbar="false" notree="false" packagenames="com.cloudant.couchdbjavaserver,com.cloudant.javaviews,com.cloudant.index,com.cloudant.indexers" source="1.6" sourcepath="src:lib" splitindex="true" use="true" version="true"/>
     </target>
