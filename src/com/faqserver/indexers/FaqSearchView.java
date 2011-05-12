@@ -27,7 +27,7 @@ import org.apache.lucene.util.*;
 
 import org.apache.lucene.analysis.snowball.SnowballAnalyzer;
 
-public class CustomSearchView implements SearchView {
+public class FaqSearchView implements SearchView {
 	
     /**
      * An array containing some common English words
@@ -71,8 +71,9 @@ public class CustomSearchView implements SearchView {
 		
 	public Analyzer getAnalyzer() {
 		if (analyzer == null) {
-			return new SnowballAnalyzer(Version.LUCENE_30, "English", STOP_WORDS);
-			//StandardAnalyzer(Version.LUCENE_30);
+			return
+				//new SnowballAnalyzer(Version.LUCENE_30, "English", STOP_WORDS);
+				new StandardAnalyzer(Version.LUCENE_30);
 		} else {
 			return analyzer;
 		}
