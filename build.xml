@@ -41,7 +41,7 @@
     <mkdir dir="${bin.dir}"/>
     <javac srcdir="${src.dir}"
            destdir="${bin.dir}"
-           debug="true" debuglevel="lines">
+           debug="true" debuglevel="lines" includeantruntime="false">
       <classpath refid="build.path"/>
     </javac>
   </target>
